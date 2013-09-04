@@ -1,0 +1,1156 @@
+<?php
+
+require_once("mainfile.php");
+$module_name = basename(dirname(__FILE__));
+require_once("modules/$module_name/common.php");
+
+get_lang($module_name);
+$pagetitle = "- Ετήσιο Πρόγραμμα Συντήρησης Εξοπλισμού";
+include("header.php");
+
+global $prefix,$db,$user,$userinfo,$usersection,$sectname;
+getusrinfo($user);
+
+$user_id=$userinfo[user_id];
+
+$user_name=$userinfo[username];
+$user_ip=getenv("REMOTE_ADDR");
+
+$temp=getusrsection($user_id);
+$staff_selection_id=$usersection[staff_section_id];
+$temp1=getusrsectname($usersection[staff_section_id]);
+getmanagesection();
+
+$db2 =mysql_connect("localhost", "root", "") or die(mysql_error());
+ if (!$db2)
+  {
+   die('Could not connect :'.mysql_error());
+  }
+ else
+ {
+  $db_select = mysql_select_db("equipment");
+  mysql_query("SET NAMES 'greek'",$db2);
+  if(!$db_select)
+  {
+    die('Could not select the database: <br />'.mysql_error());
+  }
+ }
+
+echo "<script language=\"javascript\" type=\"text/javascript\" src=\"modules/equipment_maintenance/java_scripts.js\"></script>";
+echo "<script language=\"javascript\" type=\"text/javascript\" src=\"modules/equipment_maintenance/java_scripts1.js\"></script>";
+
+opentable();
+
+
+echo "<table border=0><tr>";
+echo "<td align=center valign=top> <button style=\"width=200; height=50;\" "
+    ."onClick=\"javascript:window.location='modules.php?name=$module_name&amp;op=time_table';\" >"
+    ."<table border=0 width=200 height=45><tr><td align=center valign=middle><b>Δημιουργία</b> Ετήσιου Προγράμματος Συντήρησης Εξοπλισμού</td></tr></button></table></td>";
+echo "<td align=center valign=top> <button style=\"width=200; height=50;\" "
+    ."onClick=\"javascript:window.location='modules.php?name=$module_name&amp;op=time_table_show';\" >"
+    ."<table border=0 width=200 height=45><tr><td align=center valign=middle><b>Προβολή</b> Ετήσιου Προγράμματος Συντήρησης Εξοπλισμού</td></tr></button></table></td>";
+echo "</tr></table>";
+
+
+closetable();
+
+
+
+opentable();
+
+
+
+/////////////////////////////////////
+//					// dimiourgia programmatos sinitirisis mixanimatwn
+//		SYNARTHSH 1 		//
+//					//
+/////////////////////////////////////
+
+function time_table($db2,$db_select,$module_name,$sectname,$usersection,$managesection)
+{
+
+//periptwsi kata tin opoia i provoli sigkekrimenou sindiasmou den iparxei 
+//apostoli mesw link twn epilogwn sto paron arxeio gia dimiourgia
+$view_create_eq = $_GET['view_create_eq'];
+$view_create_year = $_GET['view_create_year'];
+
+$current = getdate();
+$day = $current['mday'];
+$month = $current['mon'];
+$year = $current['year'];
+?>
+
+
+
+
+<?php function daymonth($number)
+{
+for ($i=1;$i<$number;$i++) { echo "<option> $i </option>"; }
+}
+?>
+
+
+<?php function calendar_week($start_week,$counter) {
+for ($i=$start_week;$i<$counter+$start_week;$i++)
+{
+echo "<td><input type='button' name='calendar_week_$i' id='week_$i' onclick='checkWeek($i)' /></td>";
+}
+}
+?>
+
+<?php function calendar_week_disabled($counter) {
+for ($i=1;$i<$counter+1;$i++)
+{
+echo "<td><input type='button' name='calendar_week_".$i."' disabled='disabled'/></td>";
+}
+}
+?>
+
+
+<?php 
+if (!array_key_exists('create_timetable', $_POST) && !array_key_exists('create_confirm', $_POST)) 
+{ 
+?>
+
+<b><u>Η συμπλήρωση όλων των πεδίων με (*) είναι υποχρεωτική</u></b>
+<br/><br/>
+
+<table name="create_1_type" cols="2" border="1" cellpadding="1" cellspacing="6">
+
+
+<form style="display:inline" name="form_timetable" action="modules.php?name=equipment_maintenance&amp;op=time_table_ok" onsubmit="return validate(form_timetable)" method="post" enctype="multipart/form-data">
+<tr><td bgcolor=#D3E2EA><b>* Επιλέξτε τύπο εξοπλισμού</b></td>
+<td>
+<select name="type_maint" id="type_j" method="post" >
+<option></option>
+<option <?php if ($view_create_eq=="Alarm System") { echo "selected"; } ?>>Alarm System</option>
+<option <?php if ($view_create_eq=="Backup") { echo "selected"; } ?>>Backup</option>
+<option <?php if ($view_create_eq=="Barcode Reader") { echo "selected"; } ?>>Barcode Reader</option>
+<option <?php if ($view_create_eq=="Copier") { echo "selected"; } ?>>Copier</option>
+<option <?php if ($view_create_eq=="Fax") { echo "selected"; } ?>>Fax</option>
+<option <?php if ($view_create_eq=="Furniture") { echo "selected"; } ?>>Furniture</option>
+<option <?php if ($view_create_eq=="Multimedia DVD-Video Player") { echo "selected"; } ?>>Multimedia DVD-Video Player</option>
+<option <?php if ($view_create_eq=="Multimedia TV") { echo "selected"; } ?>>Multimedia TV</option>
+<option <?php if ($view_create_eq=="Multimedia --Other--") { echo "selected"; } ?>>Multimedia --Other--</option>
+<option <?php if ($view_create_eq=="Network Equipment") { echo "selected"; } ?>>Network Equipment</option>
+<option <?php if ($view_create_eq=="PC") { echo "selected"; } ?>>PC</option>
+<option <?php if ($view_create_eq=="Printer") { echo "selected"; } ?>>Printer</option>
+<option <?php if ($view_create_eq=="Projector") { echo "selected"; } ?>>Projector</option>
+<option <?php if ($view_create_eq=="Scanner") { echo "selected"; } ?>>Scanner</option>
+<option <?php if ($view_create_eq=="Screen") { echo "selected"; } ?>>Screen</option>
+<option <?php if ($view_create_eq=="Server") { echo "selected"; } ?>>Server</option>
+<option <?php if ($view_create_eq=="Storage") { echo "selected"; } ?>>Storage</option>
+<option <?php if ($view_create_eq=="Thin Client") { echo "selected"; } ?>>Thin Client</option>
+<option <?php if ($view_create_eq=="UPS") { echo "selected"; } ?>>UPS</option>
+<option <?php if ($view_create_eq=="--Other--") { echo "selected"; } ?>>--Other--</option>
+</select>
+</td></tr>
+
+<tr><td bgcolor=#D3E2EA><b>* Επιλέξτε το έτος συντήρησης</b></td>
+<td>
+<select name="year_maint" id="year_j" method="post" >
+<option></option>
+<?php
+//arxikos elegxos gia to ean exei ginei pote post i metavliti
+//pio swsta, arxikos elegxos gia to ean exei ginei set i metavliti
+//ean nai, tote 8etw selected==<metavliti pou ginetai post> --> periptwsi opou kanoume dimiourgia mesw provolis
+if (isset($view_create_year)) {
+for ($z=$year;$z<$view_create_year;$z++) {
+echo "<option>$z</option>";
+}
+echo "<option selected>$view_create_year</option>";
+for ($z=$view_create_year+1;$z<$year+3;$z++) {
+echo "<option>$z</option>";
+}
+}
+//ean oxi, tote 8etw selected==current year --> periptwsi opou epilegoume amesi dimiourgia kai oxi mesw provolis
+if (!isset($view_create_year)) {
+echo "<option selected>$year</option>";
+for($k=$year+1;$k<$year+3;$k++) {
+echo "<option>$k</option>";
+}
+}
+?>
+</select>
+</td></tr>
+
+
+<tr><td bgcolor=#D3E2EA><b>* Επιλέξτε συχνότητα συντήρησης<br/>(κάθε πόσο συχνά το χρόνο)</b></td>
+<td>
+<select name="freq_maint" id="freq_j" onchange="choose(document.form_timetable.freq_maint.options[document.form_timetable.freq_maint.selectedIndex].value)" >
+<option value=" "></option>
+<option value="1">1 Εβδομάδα</option>
+<option value="2">2 Εβδομάδες</option>
+<option value="3">1 Μήνας</option>
+<option value="4">2 Μήνες</option>
+<option value="5">3 Μήνες</option>
+<option value="6">4 Μήνες</option>
+<option value="7">6 Μήνες</option>
+<option value="8">1 Χρόνος</option>
+</select>
+</td></tr>
+
+
+
+<tr id="ena_tr" style="display:none"><td colspan="2">
+<!--pinakas calendar_week_control -->
+<table name="calendar_week_control" cols="6" border="1">
+<tr><td align="center" bgcolor="#D3E2EA" colspan="16"><b>Επιλέξτε το χρονοπρογραμματισμό που επιθυμείτε</b></td></tr>
+
+<tr>
+<td align="center" bgcolor="#D3E2EA"><b>ΙΑΝ</b></td>
+<?php calendar_week(1,4); ?>
+<td align="center" bgcolor="#D3E2EA"><b>ΦΕΒ</b></td>
+<?php calendar_week(5,4); ?>
+<td align="center" bgcolor="#D3E2EA"><b>ΜΑΡ</b></td>
+<?php calendar_week(9,5); ?>
+</tr>
+
+<tr>
+<td align="center" bgcolor="#D3E2EA"><b>ΑΠΡ</b></td>
+<?php calendar_week(14,4); ?>
+<td align="center" bgcolor="#D3E2EA"><b>ΜΑΙ</b></td>
+<?php calendar_week(18,4); ?>
+<td align="center" bgcolor="#D3E2EA"><b>ΙΟΥΝ</b></td>
+<?php calendar_week(22,5); ?>
+</tr>
+
+<tr>
+<td align="center" bgcolor="#D3E2EA"><b>ΙΟΥΛ</b></td>
+<?php calendar_week(27,4); ?>
+<td align="center" bgcolor="#D3E2EA"><b>ΑΥΓ</b></td>
+<?php calendar_week(31,4); ?>
+<td align="center" bgcolor="#D3E2EA"><b>ΣΕΠ</b></td>
+<?php calendar_week(35,5); ?>
+</tr>
+
+<tr>
+<td align="center" bgcolor="#D3E2EA"><b>ΟΚΤ</b></td>
+<?php calendar_week(40,4); ?>
+<td align="center" bgcolor="#D3E2EA"><b>ΝΟΕ</b></td>
+<?php calendar_week(44,4); ?>
+<td align="center" bgcolor="#D3E2EA"><b>ΔΕΚ</b></td>
+<?php calendar_week(48,5); ?>
+</tr>
+
+</table></td></tr>
+<!--pinakas calendar_week_control -->
+
+
+
+<tr id="dio_tr" style="display:none"><td colspan="2">
+<!--pinakas calendar_month_control_dokimi -->
+<table name="calendar_month_control_dokimi" cols="6" border="1" >
+<tr><td align="center" bgcolor="#D3E2EA" colspan="16"><b>Επιλέξτε το χρονοπρογραμματισμό που επιθυμείτε</b></td></tr>
+
+<tr>
+<th><input type="button" name="calendar_month_1" id="month_1" value="ΙΑΝ" onclick="checkMonth(1)" /></th>
+<?php calendar_week_disabled(4); ?>
+<th><input type="button" name="calendar_month_2" id="month_2" value="ΦΕΒ" onclick="checkMonth(2)" /></th>
+<?php calendar_week_disabled(4); ?>
+<th><input type="button" name="calendar_month_3" id="month_3" value="ΜΑΡ" onclick="checkMonth(3)" /></th>
+<?php calendar_week_disabled(5); ?>
+</tr>
+
+<tr>
+<th><input type="button" name="calendar_month_4" id="month_4" value="ΑΠΡ" onclick="checkMonth(4)" /></th>
+<?php calendar_week_disabled(4); ?>
+<th><input type="button" name="calendar_month_5" id="month_5" value="ΜΑΙ" onclick="checkMonth(5)" /></th>
+<?php calendar_week_disabled(4); ?>
+<th><input type="button" name="calendar_month_6" id="month_6" value="ΙΟΥΝ" onclick="checkMonth(6)" /></th>
+<?php calendar_week_disabled(5); ?>
+</tr>
+
+<tr>
+<th><input type="button" name="calendar_month_7" id="month_7" value="ΙΟΥΛ" onclick="checkMonth(7)" /></th>
+<?php calendar_week_disabled(4); ?>
+<th><input type="button" name="calendar_month_8" id="month_8" value="ΑΥΓ" onclick="checkMonth(8)" /></th>
+<?php calendar_week_disabled(4); ?>
+<th><input type="button" name="calendar_month_9" id="month_9" value="ΣΕΠ" onclick="checkMonth(9)" /></th>
+<?php calendar_week_disabled(5); ?>
+</tr>
+
+<tr>
+<th><input type="button" name="calendar_month_10" id="month_10" value="ΟΚΤ" onclick="checkMonth(10)" /></th>
+<?php calendar_week_disabled(4); ?>
+<th><input type="button" name="calendar_month_11" id="month_11" value="ΝΟΕ" onclick="checkMonth(11)" /></th>
+<?php calendar_week_disabled(4); ?>
+<th><input type="button" name="calendar_month_12" id="month_12" value="ΔΕΚ" onclick="checkMonth(12)" /></th>
+<?php calendar_week_disabled(5); ?>
+</tr>
+
+</table></td></tr>
+<!--pinakas calendar_month_control_dokimi -->
+
+
+</table><br>
+<input type="submit" value="Δημιουργία" onClick="checkButton()" name="create_timetable" />
+<input type="reset" value="Εκκαθάριση" onClick="resetAll(); document.getElementById('aris_button').style.backgroundColor = ''" />
+<input type="hidden" name="_1_create_check"  value="1" />
+<input type="hidden" name="check_week_string" value="-" />
+<input type="hidden" name="check_num_weeks_string" value="-" />
+<input type="hidden" name="check_month_string" value="-" />
+<input type="hidden" name="check_num_months_string" value="-" />
+<input type="hidden" name="js_check" value="<tr><td colspan='2'><label for='xaxa'>Epilexte prwta ti sixnotita sintirisis pou epi8imite!</label></td></tr>" />
+
+</form>
+
+<?php 
+} //end if !array_key_exists
+} //END OF SYNARTHSH 1
+
+?>
+
+<?php
+
+
+
+
+
+
+/////////////////////////////////////
+//					//
+//		SYNARTHSH 2 		// dimiourgia programmatos sintirisis meta to patima tou koumpiou OK
+//					//
+/////////////////////////////////////
+
+
+function time_table_ok($db2,$db_select,$module_name,$sectname,$usersection,$managesection)
+
+{
+if (array_key_exists('create_timetable', $_POST)) { 
+
+//periptwsi kata tin opoia i provoli sigkekrimenou sindiasmou den iparxei 
+//apostoli mesw link twn epilogwn sto paron arxeio gia dimiourgia
+$view_create_eq = $_GET['view_create_eq'];
+$view_create_year = $_GET['view_create_year'];
+
+$current = getdate();
+$day = $current['mday'];
+$month = $current['mon'];
+$year = $current['year'];
+
+//Hmerominia dimiourgias tou timetable
+$temp_date=$year."-".$month."-".$day;
+
+//Omada mixanimatwn pou afora to timetable
+$eq_maint=$_POST['type_maint'];
+
+//Tipos sintirisis=Programmatismeni sintirisi
+$maint_type="Π";
+
+//Trexon etos
+$maint_year=$_POST['year_maint'];
+
+//elegxos gia to ean epilextike ebdomada i minas
+$freq=$_POST['freq_maint'];
+
+//ELEGXOS GIA TO EAN DEN EXEI EPILEX8EI SYXNOTHTA
+
+
+//epilogi EBDOMADAS
+if ($freq==1 || $freq==2) { 
+$temp_month="-%-";
+$temp_week_1=$_POST['check_num_weeks_string'];
+$temp_week_2=$_POST['check_week_string'];
+$temp_week=$temp_week_1."%".$temp_week_2; //ari8mos ebdomadwn kai ka8orismos ebdomadwn
+$frequency_final=$temp_week_1." week";
+}
+//epilogi MHNA
+if ($freq>=3 && $freq<=8) {
+$temp_week="-%-";
+$temp_month_1=$_POST['check_num_months_string'];
+$temp_month_2=$_POST['check_month_string'];
+$temp_month=$temp_month_1."%".$temp_month_2; //ari8mos minwn kai ka8orismos minwn
+$frequency_final=$temp_month_1." month";
+}
+
+
+//ELEGXOS GIA TO EAN H BASH EINAI KENH APO KATAXWRHSEIS 'H OXI
+$query_zero_db="select * from maintenance";
+$return_zero_db=mysql_query($query_zero_db);
+$count_zero_db=mysql_num_rows($return_zero_db);
+
+
+
+//PERIPTWSH 1
+//ean i basi einai keni, vazw to operation_id xeirwnaktika iso me ENA
+if ($count_zero_db==0) 
+{ 
+$row_zero_db=mysql_fetch_array($return_zero_db);
+$maint_id=1;
+$query_maint="insert into equipment.maintenance ".
+"(maint_id,eq_type,maint_type,maint_date,last_maint_date,maint_freq,maint_year,maint_month,maint_week)".
+" values ".
+"('$maint_id', '$eq_maint', '$maint_type', '$temp_date', '$temp_date', '$frequency_final', '$maint_year', '$temp_month', '$temp_week')";
+$return_query=mysql_query($query_maint);
+}
+
+
+//PERIPTWSH 2
+//Ean i vasi DEN einai keni, den asxoloume me to operation_id dioti exei dilw8ei ws auto-increment sti vasi
+if ($count_zero_db!=0)
+{
+
+//ELEGXOS GIA TO EAN STH BASH YPARXOYN KATAXWRHSEIS ME TON YPARXONTA SYNDYASMO
+$query_year_type="select maint_id,maint_freq,eq_type,maint_year from equipment.maintenance where eq_type='".$eq_maint."' AND maint_year='".$maint_year."' limit 1";
+$return_year_type=mysql_query($query_year_type);
+$count_year_type=mysql_num_rows($return_year_type);
+$row_year_type=mysql_fetch_array($return_year_type);
+
+$wanted_id=$row_year_type['maint_id'];
+$old_freq=$row_year_type['maint_freq'];
+
+//echo "Η επιλογή που κάνατε: <br/><br/> Τύπος εξοπλισμού: <b>$eq_maint</b> ,<br/> Έτος συντήρησης: <b>$maint_year</b> ,<br/> Συχνότητα συντήρησης: <b>$frequency_final</b>. <br/><br/>";
+// edw 8a valw to neo pinaka
+echo "Η επιλογή που κάνατε: <br><br>";
+?>
+
+<table name="create_1_format" cols="2" border="1" cellpadding="1" cellspacing="6">
+<tr><td bgcolor=#D3E2EA><b>Τύπος εξοπλισμού</b></td><td><?php echo $eq_maint; ?></td></tr>
+<tr><td bgcolor=#D3E2EA><b>Έτος συντήρησης</b></td><td><?php echo $maint_year; ?></td></tr>
+<tr><td bgcolor=#D3E2EA><b>Συχνότητα συντήρησης <br> (το χρόνο)</b></td><td><?php echo $frequency_final; ?></td></tr></table>
+<br>
+<?php
+
+
+if ($count_year_type==1) {
+echo "Είναι ήδη καταχωρημένη στη Βάση Δεδομένων, με Συχνότητα συντήρησης: <b>$old_freq</b>.<br/><br/>";
+echo "Επιλέξτε 'Επιβεβαίωση' εάν θέλετε να εφαρμόσετε το νέο χρονοπρογραμματισμό <br/> ή 'Επιστροφή' για να επιστρέψετε στην προηγούμενη σελίδα.<br/><br/>";
+?>
+
+<form style="display:inline" name="form_confirm_creation" action="modules.php?name=equipment_maintenance&amp;op=time_table_ok" method="post" enctype="multipart/form-data">
+<input type="submit" value="Επιβεβαίωση" name="create_confirm" />
+<input type="reset" value="Επιστροφή" onclick="javascript: history.go(-1)"/>
+<input type="hidden" name="eq_maint" value="<?php echo $eq_maint; ?>" />
+<input type="hidden" name="temp_date" value="<?php echo $temp_date; ?>" />
+<input type="hidden" name="maint_year" value="<?php echo $maint_year; ?>" />
+<input type="hidden" name="maint_month" value="<?php echo $temp_month; ?>" />
+<input type="hidden" name="maint_week" value="<?php echo $temp_week; ?>" />
+<input type="hidden" name="freq" value="<?php echo $frequency_final; ?>" />
+<input type="hidden" name="wanted_id" value="<?php echo $wanted_id; ?>" />
+</form>
+
+<?php
+
+
+
+}
+
+else if ($count_year_type!=1) {
+//Eisagwgi twn stoixeiwn tis formas sti basi
+$query_maint="insert into equipment.maintenance ".
+"(eq_type,maint_type,maint_date,last_maint_date,maint_freq,maint_year,maint_month,maint_week)".
+" values ".
+"('$eq_maint', '$maint_type', '$temp_date', '$temp_date', '$frequency_final', '$maint_year', '$temp_month', '$temp_week')";
+$return_query=mysql_query($query_maint);
+
+echo "Εισήχθη επιτυχώς στη Βάση Δεδομένων!!<br/><br/>";
+echo "Κάντε κλικ <a href='http://150.140.152.10/mylis/modules.php?name=equipment_maintenance&amp;op=time_table_show&amp;create_view_eq=$eq_maint&amp;create_view_year=$maint_year'>εδώ</a> για να μεταβείτε στην προβολή του χρονοπρογραμματισμού όλων των μηχανημάτων.";
+}
+
+} //end if count_zero_db=0
+
+} // end if array_key_exists
+
+
+
+
+
+//periptwsi opou kanoume tropopoiisi iparxousas kataxwrisis mesw tou menou tis dimiourgias!!
+if (array_key_exists('create_confirm', $_POST) && !array_key_exists('create_timetable', $_POST)) {
+$eq_maint=$_POST['eq_maint'];
+$temp_date=$_POST['temp_date'];
+$maint_year=$_POST['maint_year'];
+$maint_month=$_POST['maint_month'];
+$maint_week=$_POST['maint_week'];
+$freq=$_POST['freq'];
+$id=$_POST['wanted_id'];
+
+//Ananewsi tis iparxousas kataxwrisis sti BD
+$query_maint="update equipment.maintenance set eq_type='".$eq_maint."', last_maint_date='".$temp_date.
+"', maint_year='".$maint_year."', maint_month='".$maint_month."', maint_week='".$maint_week.
+"', maint_freq='".$freq."' where maint_id='".$id."'";
+$return_query=mysql_query($query_maint);
+
+//echo $query_maint;
+echo "Η τροποποίηση της επιλεγμένης καταχώρησης έλαβε χώρα επιτυχώς!!";
+echo "<br/><br>";
+echo "Κάντε κλικ <a href='http://150.140.152.10/mylis/modules.php?name=equipment_maintenance&amp;op=time_table_show&amp;create_view_eq=$eq_maint&amp;create_view_year=$maint_year'>εδώ</a> για να μεταβείτε στην προβολή του χρονοπρογραμματισμού όλων των μηχανημάτων.";
+
+} //end if array_key_exists gia ti forma epivevaiwsis
+
+}
+
+// END OF SYNARTHSH 2
+
+?>
+
+<?php
+
+
+/////////////////////////////////////
+//					//
+//		SYNARTHSH 3 		// provoli tou programmatos sintirisis (1o treximo arxeiou)
+//					//
+/////////////////////////////////////
+
+function time_table_show($db2,$db_select,$module_name,$sectname,$usersection,$managesection,$user_id)
+{
+
+
+//periptwsi kata tin opoia 8elw na epilexw proboli meta apo dimiourgia
+//apostoli mesw link twn epilogwn sto paron arxeio gia dimiourgia
+$create_view_eq = $_GET['create_view_eq'];
+$create_view_year = $_GET['create_view_year'];
+
+
+$current = getdate();
+$day = $current['mday'];
+$month = $current['mon'];
+$year = $current['year'];
+?>
+
+<?php function daymonth($number)
+{
+for ($i=1;$i<$number;$i++) { echo "<option> $i </option>"; }
+}
+?>
+
+
+<?php function calendar_week($start_week,$counter) {
+for ($i=$start_week;$i<$counter+$start_week;$i++)
+{
+echo "<td><input type='button' name='calendar_week_$i' id='week_$i' onclick='checkWeekTwo($i)' /></td>";
+}
+}
+?>
+
+<?php function calendar_week_disabled($counter) {
+for ($i=1;$i<$counter+1;$i++)
+{
+echo "<td><input type='button' name='calendar_week_".$i."' disabled='disabled'/></td>";
+}
+}
+?>
+
+<?php 
+//PRWTO TREXIMO TOY ARXEIOY
+if (!array_key_exists('show_timetable', $_POST) && !array_key_exists('create_timetable',$_POST) && !array_key_exists('confirm_final',$_POST) ) 
+{
+?>
+
+<b><u>Η συμπλήρωση όλων των πεδίων με (*) είναι υποχρεωτική</u></b>
+<br/><br/>
+
+<form style="display:inline" name="form_show_timetable" action="modules.php?name=equipment_maintenance&amp;op=time_table_show_second" onsubmit="return validateTwo(form_show_timetable)" method="post" enctype="multipart/form-data">
+
+<table name="show_1_type" id="hide_first_table" cols="2" border="1" cellpadding="1" cellspacing="6">
+<tr><td bgcolor="#D3E2EA"><b>* Επιλέξτε τύπο εξοπλισμού</b></td>
+<td>
+<select name="type_maint" id="type_j" method="post" >
+<option></option>
+<option <?php if ($create_view_eq=="Alarm System") { echo "selected"; } ?>>Alarm System</option>
+<option <?php if ($create_view_eq=="Backup") { echo "selected"; } ?>>Backup</option>
+<option <?php if ($create_view_eq=="Barcode Reader") { echo "selected"; } ?>>Barcode Reader</option>
+<option <?php if ($create_view_eq=="Copier") { echo "selected"; } ?>>Copier</option>
+<option <?php if ($create_view_eq=="Fax") { echo "selected"; } ?>>Fax</option>
+<option <?php if ($create_view_eq=="Furniture") { echo "selected"; } ?>>Furniture</option>
+<option <?php if ($create_view_eq=="Multimedia DVD-Video Player") { echo "selected"; } ?>>Multimedia DVD-Video Player</option>
+<option <?php if ($create_view_eq=="Multimedia TV") { echo "selected"; } ?>>Multimedia TV</option>
+<option <?php if ($create_view_eq=="Multimedia --Other--") { echo "selected"; } ?>>Multimedia --Other--</option>
+<option <?php if ($create_view_eq=="Network Equipment") { echo "selected"; } ?>>Network Equipment</option>
+<option <?php if ($create_view_eq=="PC") { echo "selected"; } ?>>PC</option>
+<option <?php if ($create_view_eq=="Printer") { echo "selected"; } ?>>Printer</option>
+<option <?php if ($create_view_eq=="Projector") { echo "selected"; } ?>>Projector</option>
+<option <?php if ($create_view_eq=="Scanner") { echo "selected"; } ?>>Scanner</option>
+<option <?php if ($create_view_eq=="Screen") { echo "selected"; } ?>>Screen</option>
+<option <?php if ($create_view_eq=="Server") { echo "selected"; } ?>>Server</option>
+<option <?php if ($create_view_eq=="Storage") { echo "selected"; } ?>>Storage</option>
+<option <?php if ($create_view_eq=="Thin Client") { echo "selected"; } ?>>Thin Client</option>
+<option <?php if ($create_view_eq=="UPS") { echo "selected"; } ?>>UPS</option>
+<option <?php if ($create_view_eq=="--Other--") { echo "selected"; } ?>>--Other--</option>
+</select>
+</td></tr>
+
+<tr><td bgcolor="#D3E2EA"><b>* Επιλέξτε το έτος συντήρησης</b></td>
+<td>
+<select name="year_maint" id="year_j" method="post" >
+<option></option>
+<?php
+//arxikos elegxos gia to ean exei ginei pote post i metavliti
+//pio swsta, arxikos elegxos gia to ean exei ginei set i metavliti
+//ean nai, tote 8etw selected==<metavliti pou ginetai post> --> periptwsi opou kanoume dimiourgia mesw provolis
+if (isset($create_view_year)) {
+for ($z=2008;$z<$create_view_year;$z++) {
+echo "<option>$z</option>";
+}
+echo "<option selected>$create_view_year</option>";
+for ($z=$create_view_year+1;$z<$year+3;$z++) {
+echo "<option>$z</option>";
+}
+}
+//ean oxi, tote 8etw selected==current year --> periptwsi opou epilegoume amesi dimiourgia kai oxi mesw provolis
+// && !array_key_exists
+if (!isset($create_view_year)) {
+for($k=2008;$k<$year+3;$k++) {
+echo "<option>$k</option>";
+}
+}
+?>
+</select>
+</td></tr>
+</table>
+<br>
+<input id="hide_submit" style="display:inline" type="submit" value="Προβολή" name="show_timetable" />
+</form>
+
+<?php
+
+
+ } //end if !array_key_exists 
+
+
+} // END OF SYNARTHSH 3
+
+?>
+
+
+ 
+<?php
+
+/////////////////////////////////////
+//					//
+//		SYNARTHSH 4 		// provoli tou programmatos sintirisis (2o treximo arxeiou)
+//					//
+/////////////////////////////////////
+
+function time_table_show_second($db2,$db_select,$module_name,$sectname,$usersection,$managesection,$user_id)
+{
+
+//DEYTERO TREXIMO TOY ARXEIOY
+if (array_key_exists('show_timetable', $_POST) && !array_key_exists('create_timetable', $_POST) && !array_key_exists('confirm_final',$_POST)) {
+
+//periptwsi kata tin opoia 8elw na epilexw proboli meta apo dimiourgia
+//apostoli mesw link twn epilogwn sto paron arxeio gia dimiourgia
+$create_view_eq = $_GET['create_view_eq'];
+$create_view_year = $_GET['create_view_year'];
+
+$current = getdate();
+$day = $current['mday'];
+$month = $current['mon'];
+$year = $current['year'];
+?>
+
+<?php function daymonth($number)
+{
+for ($i=1;$i<$number;$i++) { echo "<option> $i </option>"; }
+}
+?>
+
+
+<?php function calendar_week($start_week,$counter) {
+for ($i=$start_week;$i<$counter+$start_week;$i++)
+{
+echo "<td><input type='button' name='calendar_week_$i' id='week_$i' onclick='checkWeekTwo($i)' /></td>";
+}
+}
+?>
+
+<?php function calendar_week_disabled($counter) {
+for ($i=1;$i<$counter+1;$i++)
+{
+echo "<td><input type='button' name='calendar_week_".$i."' disabled='disabled'/></td>";
+}
+}
+?>
+
+<?php
+
+$type_m=$_POST['type_maint'];
+$year_m=$_POST['year_maint'];
+
+$query_show="select * from equipment.maintenance where eq_type='".$type_m."' and maint_year='".$year_m."' limit 1";
+$return_query_show=mysql_query($query_show);
+$count_query_show=mysql_num_rows($return_query_show);
+?>
+
+
+<form style="display:inline" name="form_edit_timetable" action="modules.php?name=equipment_maintenance&amp;op=time_table_show_third" method="post" enctype="multipart/form-data">
+<table name="edit_1_type" cols="2" border="1" cellpadding="1" cellspacing="6">
+
+
+<tr><td bgcolor="#D3E2EA"><b>Επιλέξτε τύπο εξοπλισμού</b></td>
+<td>
+<select name="type_maint" method="post" >
+<option></option>
+<option <?php if ($type_m=="Alarm System") { echo "selected"; } ?>>Alarm System</option>
+<option <?php if ($type_m=="Backup") { echo "selected"; } ?>>Backup</option>
+<option <?php if ($type_m=="Barcode Reader") { echo "selected"; } ?>>Barcode Reader</option>
+<option <?php if ($type_m=="Copier") { echo "selected"; } ?>>Copier</option>
+<option <?php if ($type_m=="Fax") { echo "selected"; } ?>>Fax</option>
+<option <?php if ($type_m=="Furniture") { echo "selected"; } ?>>Furniture</option>
+<option <?php if ($type_m=="Multimedia DVD-Video Player") { echo "selected"; } ?>>Multimedia DVD-Video Player</option>
+<option <?php if ($type_m=="Multimedia TV") { echo "selected"; } ?>>Multimedia TV</option>
+<option <?php if ($type_m=="Multimedia --Other--") { echo "selected"; } ?>>Multimedia --Other--</option>
+<option <?php if ($type_m=="Network Equipment") { echo "selected"; } ?>>Network Equipment</option>
+<option <?php if ($type_m=="PC") { echo "selected"; } ?>>PC</option>
+<option <?php if ($type_m=="Printer") { echo "selected"; } ?>>Printer</option>
+<option <?php if ($type_m=="Projector") { echo "selected"; } ?>>Projector</option>
+<option <?php if ($type_m=="Scanner") { echo "selected"; } ?>>Scanner</option>
+<option <?php if ($type_m=="Screen") { echo "selected"; } ?>>Screen</option>
+<option <?php if ($type_m=="Server") { echo "selected"; } ?>>Server</option>
+<option <?php if ($type_m=="Storage") { echo "selected"; } ?>>Storage</option>
+<option <?php if ($type_m=="Thin Client") { echo "selected"; } ?>>Thin Client</option>
+<option <?php if ($type_m=="UPS") { echo "selected"; } ?>>UPS</option>
+<option <?php if ($type_m=="--Other--") { echo "selected"; } ?>>--Other--</option>
+</select>
+</td></tr>
+
+<tr><td bgcolor="#D3E2EA"><b>Επιλέξτε το έτος συντήρησης</b></td>
+<td>
+<select name="year_maint" method="post" >
+<option></option>
+<?php
+if (isset($create_view_year)) {
+for ($z=2008;$z<$create_view_year;$z++) {
+echo "<option>$z</option>";
+}
+echo "<option selected>$create_view_year</option>";
+for ($z=$create_view_year+1;$z<$year+3;$z++) {
+echo "<option>$z</option>";
+}
+}
+//ean oxi, tote 8etw selected==current year --> periptwsi opou epilegoume amesi dimiourgia kai oxi mesw provolis
+if (!isset($create_view_year)) {
+//echo "<option selected>$year</option>";
+for($k=2008;$k<$year+3;$k++) {
+if ($k==$year_m) { echo "<option selected>$k</option>"; }
+if ($k!=$year_m) { echo "<option>$k</option>"; }
+}
+}
+?>
+</select>
+</td></tr>
+
+
+<tr><td bgcolor="#D3E2EA"><b>Επιλέξτε συχνότητα συντήρησης<br/>(κάθε πόσο συχνά το χρόνο)</b></td>
+<td>
+<select name="freq_maint_edit" method="post" onchange="chooseTwo(document.form_edit_timetable.freq_maint_edit.options[document.form_edit_timetable.freq_maint_edit.selectedIndex].value)" >
+<option value="0"></option>
+<option value="1">1 Εβδομάδα</option>
+<option value="2">2 Εβδομάδες</option>
+<option value="3">1 Μήνας</option>
+<option value="4">2 Μήνες</option>
+<option value="5">3 Μήνες</option>
+<option value="6">4 Μήνες</option>
+<option value="7">6 Μήνες</option>
+<option value="8">1 Χρόνος</option>
+</select>
+</td></tr>
+
+
+<!---->
+<tr id="ena_edit_tr" style="display:none"><td colspan="2">
+<!--pinakas calendar_week_control -->
+<table name="calendar_week_control" cols="6" border="1">
+<tr><td bgcolor="#D3E2EA" align="center" colspan="16"><b>Επιλέξτε το χρονοπρογραμματισμό που επιθυμείτε</b></td></tr>
+
+<tr>
+<td><b>ΙΑΝ</b></td>
+<?php calendar_week(1,4); ?>
+<td><b>ΦΕΒ</b></td>
+<?php calendar_week(5,4); ?>
+<td><b>ΜΑΡ</b></td>
+<?php calendar_week(9,5); ?>
+</tr>
+
+<tr>
+<td><b>ΑΠΡ</b></td>
+<?php calendar_week(14,4); ?>
+<td><b>ΜΑΙ</b></td>
+<?php calendar_week(18,4); ?>
+<td><b>ΙΟΥΝ</b></td>
+<?php calendar_week(22,5); ?>
+</tr>
+
+<tr>
+<td><b>ΙΟΥΛ</b></td>
+<?php calendar_week(27,4); ?>
+<td><b>ΑΥΓ</b></td>
+<?php calendar_week(31,4); ?>
+<td><b>ΣΕΠ</b></td>
+<?php calendar_week(35,5); ?>
+</tr>
+
+<tr>
+<td><b>ΟΚΤ</b></td>
+<?php calendar_week(40,4); ?>
+<td><b>ΝΟΕ</b></td>
+<?php calendar_week(44,4); ?>
+<td><b>ΔΕΚ</b></td>
+<?php calendar_week(48,5); ?>
+</tr>
+
+</table></td></tr>
+<!--pinakas calendar_week_control -->
+
+
+<!---->
+<tr id="dio_edit_tr" style="display:none"><td colspan="2">
+<!--pinakas calendar_month_control_dokimi -->
+<table name="calendar_month_control_dokimi_edit" cols="6" border="1" >
+<tr><td bgcolor="#D3E2EA" align="center" colspan="16"><b>Επιλέξτε το χρονοπρογραμματισμό που επιθυμείτε</b></td></tr>
+
+<tr>
+<td><input type="button" name="calendar_month_1" id="month_1" value="ΙΑΝ" onclick="checkMonthTwo(1)" /></td>
+<?php calendar_week_disabled(4); ?>
+<td><input type="button" name="calendar_month_2" id="month_2" value="ΦΕΒ" onclick="checkMonthTwo(2)" /></td>
+<?php calendar_week_disabled(4); ?>
+<td><input type="button" name="calendar_month_3" id="month_3" value="ΜΑΡ" onclick="checkMonthTwo(3)" /></td>
+<?php calendar_week_disabled(5); ?>
+</tr>
+
+<tr>
+<td><input type="button" name="calendar_month_4" id="month_4" value="ΑΠΡ" onclick="checkMonthTwo(4)" /></td>
+<?php calendar_week_disabled(4); ?>
+<td><input type="button" name="calendar_month_5" id="month_5" value="ΜΑΙ" onclick="checkMonthTwo(5)" /></td>
+<?php calendar_week_disabled(4); ?>
+<td><input type="button" name="calendar_month_6" id="month_6" value="ΙΟΥΝ" onclick="checkMonthTwo(6)" /></td>
+<?php calendar_week_disabled(5); ?>
+</tr>
+
+<tr>
+<td><input type="button" name="calendar_month_7" id="month_7" value="ΙΟΥΛ" onclick="checkMonthTwo(7)" /></td>
+<?php calendar_week_disabled(4); ?>
+<td><input type="button" name="calendar_month_8" id="month_8" value="ΑΥΓ" onclick="checkMonthTwo(8)" /></td>
+<?php calendar_week_disabled(4); ?>
+<td><input type="button" name="calendar_month_9" id="month_9" value="ΣΕΠ" onclick="checkMonthTwo(9)" /></td>
+<?php calendar_week_disabled(5); ?>
+</tr>
+
+<tr>
+<td><input type="button" name="calendar_month_10" id="month_10" value="ΟΚΤ" onclick="checkMonthTwo(10)" /></td>
+<?php calendar_week_disabled(4); ?>
+<td><input type="button" name="calendar_month_11" id="month_11" value="ΝΟΕ" onclick="checkMonthTwo(11)" /></td>
+<?php calendar_week_disabled(4); ?>
+<td><input type="button" name="calendar_month_12" id="month_12" value="ΔΕΚ" onclick="checkMonthTwo(12)" /></td>
+<?php calendar_week_disabled(5); ?>
+</tr>
+
+</table></td></tr>
+<!--pinakas calendar_month_control_dokimi -->
+
+
+</table>
+
+
+
+<?php
+//+++++++++++++++++++++++++++++++++++++++++++++++
+
+//PERIPTWSH A: iparxei i kataxwrisi sti vasi
+if ($count_query_show==1) {
+
+$row_query_show=mysql_fetch_array($return_query_show);
+$testarw=$row_query_show["maint_id"];
+$metavliti_month=$row_query_show['maint_month'];
+$metavliti_week=$row_query_show['maint_week'];
+
+//YPO-PERIPTWSH EPILOGHS EBDOMADAS
+if ($metavliti_month=='-%-') {
+$week_part=explode("%",$metavliti_week);
+$number_month=-1;
+$number_week=$week_part['0']; //ari8mos twn epilegmenwn ebdomadwn
+$specific_week=$week_part['1']; //oi sigkekrimenes epilegmenes ebdomades
+
+$week_blue=explode(",",$specific_week);
+?>
+
+<?php
+for ($k=0;$k<$number_week;$k++) {
+$week_final[$k]=$week_blue[$k]; //emperiexei oles tis ebdomades se morfi metavlitis/pinaka
+?>
+
+<?php
+} //end for
+
+echo "<script language='javascript'>";
+echo 'var arrr=new String("', $specific_week, '");';
+echo "var temp=new String();";
+echo "temp='week';";
+echo "javascriptArrayTwo(arrr,temp);";
+echo "</script>";
+
+?>
+
+
+
+<?php
+}//end if
+
+
+//YPO-PERIPTWSH EPILOGHS MHNA
+else if ($metavliti_week=='-%-') {
+$month_part=explode("%",$metavliti_month);
+$number_week=-1;
+$number_month=$month_part['0']; //ari8mos twn epilegmenwn minwn
+$specific_month=$month_part['1']; //oi sigkekrimenoi epilegmenoi mines
+
+$month_blue=explode(",",$specific_month);
+?>
+
+<?php
+for ($k=0;$k<$number_month;$k++) {
+$month_final[$k]=$month_blue[$k]; //emperiexei oles tis ebdomades se morfi metavlitis/pinaka
+//echo "Epilegmenos minas: $month_final[$k] <br/>";
+?>
+
+<?php
+} //end for
+
+echo "<script language='javascript'>";
+echo 'var arrr=new String("', $specific_month, '");';
+echo "var temp=new String();";
+echo "temp='month';";
+echo "javascriptArrayTwo(arrr,temp);";
+echo "</script>";
+
+?>
+
+
+
+<?php
+}//end else if
+
+
+
+
+?>
+
+<br>
+<input type="submit" value="Ενημέρωση" onClick="checkButtonTwo()" name="create_timetable" />
+<input type="reset" value="Επιστροφή" onClick="javascript:history.go(-1)" />
+<input type="hidden" name="id_update" value="<?php echo $row_query_show['maint_id']; ?>" />
+<?php //id xronoprogrammatismou ?>
+<input type="hidden" name="type_maint" value="<?php echo $row_query_show['eq_type']; ?>" />
+<?php //tipos exoplismou xronoprogrammatismou ?>
+<input type="hidden" name="year_maint" value="<?php echo $row_query_show['maint_year']; ?>" />
+<?php //xronos xronoprogrammatismou ?>
+<input type="hidden" name="_1_create_check"  value="1" />
+<input type="hidden" name="check_week_string" value="-" />
+<input type="hidden" name="check_num_weeks_string" value="-" />
+<input type="hidden" name="check_month_string" value="-" />
+<input type="hidden" name="check_num_months_string" value="-" />
+<input type="hidden" name="get_month_status" value="<?php echo $metavliti_month; ?>"  />
+<input type="hidden" name="get_week_status" value="<?php echo $metavliti_week; ?>"  />
+<input type="hidden" name="get_old_freq" value="<?php echo $row_query_show['maint_freq']; ?>"  />
+<input type="hidden" name="get_old_freq" value="<?php echo $row_query_show['maint_freq']; ?>"  />
+
+<input type="hidden" name="js_check" value="<tr><td colspan='2'><label for='xaxa'>Epilexte prwta ti sixnotita sintirisis pou epi8imite!</label></td></tr>" />
+</form>
+
+<?php
+//+++++++++++++++++++++++++++++++++++++++++++++++++
+
+} //end if $count_query_show
+
+//PERIPTWSH B: DEN iparxei i kataxwrisi sti vasi
+else if ($count_query_show!=1) {
+echo "<br/><br/>";
+echo "Κάντε κλικ <a href='http://150.140.152.10/mylis/modules.php?name=equipment_maintenance&amp;op=time_table&amp;view_create_eq=$type_m&amp;view_create_year=$year_m'>εδώ</a> για να δημιουργήσετε το χρονοπρογραμματισμό για αυτό το συνδυασμό.";
+} //end else if
+
+} //end if array_key_exists
+
+} // END OF SYNARTHSH 4
+
+?>
+
+<?php
+
+/////////////////////////////////////
+//					//
+//		SYNARTHSH 5 		// provoli tou programmatos sintirisis (3o treximo arxeiou)
+//					//
+/////////////////////////////////////
+
+function time_table_show_third($db2,$db_select,$module_name,$sectname,$usersection,$managesection,$user_id)
+{
+
+
+
+//TRITO TREXIMO TOY ARXEIOY
+if (!array_key_exists('show_timetable',$_POST) && array_key_exists('create_timetable',$_POST) && !array_key_exists('confirm_final',$_POST)) { 
+
+//periptwsi kata tin opoia 8elw na epilexw proboli meta apo dimiourgia
+//apostoli mesw link twn epilogwn sto paron arxeio gia dimiourgia
+$create_view_eq = $_GET['create_view_eq'];
+$create_view_year = $_GET['create_view_year'];
+
+$current = getdate();
+$day = $current['mday'];
+$month = $current['mon'];
+$year = $current['year'];
+?>
+
+<?php function daymonth($number)
+{
+for ($i=1;$i<$number;$i++) { echo "<option> $i </option>"; }
+}
+?>
+
+
+<?php function calendar_week($start_week,$counter) {
+for ($i=$start_week;$i<$counter+$start_week;$i++)
+{
+echo "<td><input type='button' name='calendar_week_$i' id='week_$i' onclick='checkWeekTwo($i)' /></td>";
+}
+}
+?>
+
+<?php function calendar_week_disabled($counter) {
+for ($i=1;$i<$counter+1;$i++)
+{
+echo "<td><input type='button' name='calendar_week_".$i."' disabled='disabled'/></td>";
+}
+}
+?>
+
+<?php
+//Hmerominia 'teleutaias' enimerwsis tou timetable
+$temp_date=$year."-".$month."-".$day;
+
+
+//PERIPTWSH ALLAGHS TOY dropdown GIA TO XRONOPROGRAMMATISMO
+$freq=$_POST['freq_maint_edit'];
+if ($freq>=1 && $freq<=8) {
+//epilogi EBDOMADAS
+if ($freq==1 || $freq==2) { 
+$temp_month="-%-";
+$temp_week_1=$_POST['check_num_weeks_string'];
+$temp_week_2=$_POST['check_week_string'];
+$temp_week=$temp_week_1."%".$temp_week_2; //ari8mos ebdomadwn kai ka8orismos ebdomadwn
+$frequency_final=$temp_week_1." week";
+}
+//epilogi MHNA
+if ($freq>=3 && $freq<=8) {
+$temp_week="-%-";
+$temp_month_1=$_POST['check_num_months_string'];
+$temp_month_2=$_POST['check_month_string'];
+$temp_month=$temp_month_1."%".$temp_month_2; //ari8mos minwn kai ka8orismos minwn
+$frequency_final=$temp_month_1." month";
+}
+} //end periptwsi allagis tou dropdown
+
+
+else if (!$_POST['freq_maint_edit']) {
+/////elegxw ean exw epilexei idi mina 'i ebdomada
+
+//arxiki epilogi ebdomados
+if ($_POST['get_month_status']=="-%-") {
+$temp_month="-%-";
+$temp_week_1=$_POST['check_num_weeks_string'];
+$temp_week_2=$_POST['check_week_string'];
+$temp_week=$temp_week_1."%".$temp_week_2; //ari8mos ebdomadwn kai ka8orismos ebdomadwn
+$frequency_final=$temp_week_1." week";
+}
+
+//arxiki epilogi mina
+if ($_POST['get_week_status']=="-%-") {
+$temp_week="-%-";
+$temp_month_1=$_POST['check_num_months_string'];
+$temp_month_2=$_POST['check_month_string'];
+$temp_month=$temp_month_1."%".$temp_month_2; //ari8mos minwn kai ka8orismos minwn
+$frequency_final=$temp_month_1." month";
+}
+
+} //end else if !$_POST
+
+
+echo "Είστε σίγουροι ότι θέλετε να μετατρέψετε τη συχνότητα συντήρησης από <b>".$_POST['get_old_freq']."</b> σε <b>".$frequency_final."</b> <br/>για τον τύπο εξοπλισμού <b>".$_POST['type_maint']."</b> και για το έτος <b>".$_POST['year_maint']."</b> ;<br/><br/>";
+echo "Επιλέξτε 'Επιβεβαίωση' εάν θέλετε να εφαρμόσετε το νέο χρονοπρογραμματισμό <br/>";
+echo "ή 'Επιστροφή' για να επιστρέψετε στην προηγούμενη σελίδα.<br/><br/>";
+?>
+<table name="show_1_format" cols="2" border="1" cellpadding="1" cellspacing="6">
+<tr><td bgcolor=#D3E2EA><b>Τύπος εξοπλισμού</b></td><td><?php echo $_POST['type_maint']; ?></td></tr>
+<tr><td bgcolor=#D3E2EA><b>Έτος συντήρησης</b></td><td><?php echo $_POST['year_maint']; ?></td></tr>
+<tr><td bgcolor=red><b>Υπάρχουσα συχνότητα συντήρησης <br> (το χρόνο)</b></td><td><?php echo $_POST['get_old_freq']; ?></td></tr>
+<tr><td bgcolor=yellow><b>Νέα συχνότητα συντήρησης <br> (το χρόνο)</b></td><td><?php echo $frequency_final; ?></td></tr></table><br>
+
+
+<form style="display:inline" name="form_final_confirm" action="modules.php?name=equipment_maintenance&amp;op=time_table_show_third" method="post" enctype="multipart/form-data">
+<input type="submit" value="Επιβεβαίωση" name="confirm_final" />
+<input type="reset" value="Επιστροφή" onclick="javascript:history.go(-1);" />
+<input type="hidden" name="type_maint" value="<?php echo $_POST['type_maint']; ?>" />
+<input type="hidden" name="temp_date" value="<?php echo $temp_date; ?>" />
+<input type="hidden" name="year_maint" value="<?php echo $_POST['year_maint']; ?>" />
+<input type="hidden" name="temp_month" value="<?php echo $temp_month; ?>" />
+<input type="hidden" name="temp_week" value="<?php echo $temp_week; ?>" />
+<input type="hidden" name="frequency_final" value="<?php echo $frequency_final; ?>" />
+<input type="hidden" name="id_update" value="<?php echo $_POST['id_update']; ?>" />
+<input type="hidden" name="get_old_freq" value="<?php echo $_POST['get_old_freq']; ?>" />
+</form>
+
+<?php
+}
+?>
+
+<?php
+
+//ENHMERWSH THS FORMAS
+if (array_key_exists('confirm_final',$_POST)) {
+
+// teliko insertion sti basi
+$query_update="update equipment.maintenance set eq_type='".$_POST['type_maint']."', maint_type='Π', ".
+"last_maint_date='".$_POST['temp_date']."', maint_year='".$_POST['year_maint']."', maint_month='".$_POST['temp_month']."', ".
+"maint_week='".$_POST['temp_week']."', maint_freq='".$_POST['frequency_final'].
+"' where maint_id='".$_POST['id_update']."'";
+
+echo "Η ενημέρωση της επιλεγμένης καταχώρησης έλαβε χώρα επιτυχώς!!<br/><br/>";
+echo "Κάντε κλικ <a href='http://150.140.152.10/mylis/modules.php?name=equipment_maintenance&amp;op=time_table_show&amp;create_view_eq=".$_POST['type_maint']."&amp;create_view_year=".$_POST['year_maint']."'>εδώ</a> για να μεταβείτε στην προβολή του χρονοπρογραμματισμού όλων των μηχανημάτων.";
+
+$return_query_update=mysql_query($query_update);
+//$row_query_update=mysql_fetch_assoc($return_query_update);
+} //end ENHMERWSH FORMAS
+?>
+
+<?php
+
+
+
+
+} // END OF SYNARTHSH 5
+?>
+
+<?php
+
+
+switch($op)
+{
+case "time_table":
+ 	time_table($db2,$db_select,$module_name,$sectname,$usersection,$managesection,$user_id);
+	break;
+
+case "time_table_ok":
+ 	time_table_ok($db2,$db_select,$module_name,$sectname,$usersection,$managesection,$user_id);
+	break;
+
+case "time_table_show":
+ 	time_table_show($db2,$db_select,$module_name,$sectname,$usersection,$managesection,$user_id);
+	break;
+
+case "time_table_show_second":
+ 	time_table_show_second($db2,$db_select,$module_name,$sectname,$usersection,$managesection,$user_id);
+	break;
+
+case "time_table_show_third":
+ 	time_table_show_third($db2,$db_select,$module_name,$sectname,$usersection,$managesection,$user_id);
+	break;
+}
+
+closetable();
+
+include("footer.php");
+include("includes/counter.php");
+?>
