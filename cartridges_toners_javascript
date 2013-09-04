@@ -1,0 +1,189 @@
+
+var message=new String();
+var message_show=new String();
+var message_update=new String();
+
+function validate(form) {
+message=""; //arxikopoiw ti metabliti me keno, gia na min epanalambanontai ka8e fora oi elleipeis eisodoi!!
+
+if (document.getElementById("kind_j").selectedIndex==0) { 
+message+="Δεν έχετε εισάγει το είδος του εξοπλισμού!\n";
+}
+if (document.getElementById("model_j").selectedIndex==0) { 
+message+="Δεν έχετε εισάγει το μοντέλο του μηχανήματος!\n";
+}
+if (document.getElementById("black_j").value==0) { 
+message+="Δεν έχετε εισάγει τον τύπο του μαύρου μελανιού!\n";
+}
+
+if (message!="") {
+alert (message); 
+return false
+}
+}
+
+
+
+function validate_show(form) {
+message_show=""; //arxikopoiw ti metabliti me keno, gia na min epanalambanontai ka8e fora oi elleipeis eisodoi!!
+
+if (document.getElementById("kind_show_j").selectedIndex==0) { 
+message_show+="Δεν έχετε εισάγει το είδος του εξοπλισμού!\n";
+}
+if (document.getElementById("model_show_j").selectedIndex==0) { 
+message_show+="Δεν έχετε εισάγει το μοντέλο του μηχανήματος!\n";
+}
+if (message_show!="") {
+alert (message_show); 
+return false
+}
+}
+
+
+
+function validate_update(form) {
+message_update=""; //arxikopoiw ti metabliti me keno, gia na min epanalambanontai ka8e fora oi elleipeis eisodoi!!
+
+if (document.getElementById("kind_update_j").selectedIndex==0) { 
+message_update+="Δεν έχετε εισάγει το είδος του εξοπλισμού!\n";
+}
+if (document.getElementById("model_update_j").selectedIndex==0) { 
+message_update+="Δεν έχετε εισάγει το μοντέλο του μηχανήματος!\n";
+}
+if (document.getElementById("black_update_j").value==0) { 
+message_update+="Δεν έχετε εισάγει τον τύπο του μαύρου μελανιού!\n";
+}
+
+if (message_update!="") {
+alert (message_update); 
+return false
+}
+}
+
+
+// PRINTERS
+
+// Oi sinartiseis calc_price_<melani>
+// apoteloun automatous ipologismous gia tis times twn melaniwn
+
+//black gia printer
+function calc_price_black(i) {
+var temp_black_cost=('black_cost_' + i);
+var temp_black_number=('black_number_' + i);
+var temp_black_price=('black_price_' + i);
+document.getElementById(temp_black_cost).value=(document.getElementById(temp_black_number).value)*(document.getElementById(temp_black_price).value);
+return false
+}
+
+
+//color
+function calc_price_color(j) {
+var temp_color_cost=('color_cost_' + j);
+var temp_color_number=('color_number_' + j);
+var temp_color_price=('color_price_' + j);
+document.getElementById(temp_color_cost).value=(document.getElementById(temp_color_number).value)*(document.getElementById(temp_color_price).value);
+return false
+}
+
+
+//cyan
+function calc_price_cyan(k) {
+var temp_cyan_cost=('cyan_cost_' + k);
+var temp_cyan_number=('cyan_number_' + k);
+var temp_cyan_price=('cyan_price_' + k);
+document.getElementById(temp_cyan_cost).value=(document.getElementById(temp_cyan_number).value)*(document.getElementById(temp_cyan_price).value);
+return false
+}
+
+
+//magenta
+function calc_price_magenta(m) {
+var temp_magenta_cost=('magenta_cost_' + m);
+var temp_magenta_number=('magenta_number_' + m);
+var temp_magenta_price=('magenta_price_' + m);
+document.getElementById(temp_magenta_cost).value=(document.getElementById(temp_magenta_number).value)*(document.getElementById(temp_magenta_price).value);
+//return true
+}
+
+
+//yellow
+function calc_price_yellow(n) {
+var temp_yellow_cost=('yellow_cost_' + n);
+var temp_yellow_number=('yellow_number_' + n);
+var temp_yellow_price=('yellow_price_' + n);
+document.getElementById(temp_yellow_cost).value=(document.getElementById(temp_yellow_number).value)*(document.getElementById(temp_yellow_price).value);
+return false
+}
+
+
+// elegxos gia ka8e enan printer
+function calculate_cost(c) {
+
+var black_cost=('black_cost_' + c);
+var color_cost=('color_cost_' + c);
+var cyan_cost=('cyan_cost_' + c);
+var magenta_cost=('magenta_cost_' + c);
+var yellow_cost=('yellow_cost_' + c);
+var cost_per_machine=('cost_per_machine_' + c);
+
+//elegxoi gia to ean iparxoun ta melania
+
+if (document.getElementById(black_cost).value) { var temp1=(document.getElementById(black_cost).value); } else { var temp1=0; }
+if (document.getElementById(color_cost).value) { var temp2=(document.getElementById(color_cost).value); } else { var temp2=0; }
+if (document.getElementById(cyan_cost).value) { var temp3=(document.getElementById(cyan_cost).value); } else { var temp3=0; }
+if (document.getElementById(magenta_cost).value) { var temp4=(document.getElementById(magenta_cost).value); } else { var temp4=0; }
+if (document.getElementById(yellow_cost).value) { var temp5=(document.getElementById(yellow_cost).value); } else { var temp5=0; }
+
+document.getElementById(cost_per_machine).value=parseInt(temp1)+parseInt(temp2)+parseInt(temp3)+parseInt(temp4)+parseInt(temp5);
+
+return false
+}
+
+
+
+function calc_total(number) {
+
+var a = new Array();
+var total=0;
+for (var i=0;i<number;i++) {
+a[i]=document.getElementById('cost_per_machine_' + i).value;
+total+=parseFloat(a[i]);
+}
+document.getElementById("total_cost_per_machine").value=total;
+return false
+}
+
+
+
+// FAXES
+
+
+// elegxos gia ka8e ena fax
+function calculate_fax_cost(c) {
+var black_cost_fax=('black_cost_' + c);
+var cost_per_machine_fax=('cost_per_machine_' + c);
+if (document.getElementById(black_cost_fax).value) { var temp1_fax=(document.getElementById(black_cost_fax).value); } else { var temp1_fax=0; }
+document.getElementById(cost_per_machine_fax).value=parseFloat(temp1_fax);
+return false
+}
+
+
+
+// COPIERS
+
+// elegxos gia ka8e ena copier
+function calculate_copier_cost(c) {
+var black_cost_copier=('black_cost_' + c);
+var cost_per_machine_copier=('cost_per_machine_' + c);
+if (document.getElementById(black_cost_copier).value) { var temp1_copier=(document.getElementById(black_cost_copier).value); } else { var temp1_copier=0; }
+
+if (parseFloat(temp1_copier).toFixed(2)) { document.getElementById(cost_per_machine_copier).value=parseFloat(temp1_copier).toFixed(2); }
+else { document.getElementById(cost_per_machine_copier).value=parseFloat(temp1_copier); }
+return false
+}
+
+
+
+
+
+
