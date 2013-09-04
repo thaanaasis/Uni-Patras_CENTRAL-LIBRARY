@@ -1,0 +1,71 @@
+var message=new String();
+
+function validate(form) {
+message=""; //arxikopoiw ti metabliti me keno, gia na min epanalambanontai ka8e fora oi elleipeis eisodoi!!
+
+//if (document.getElementById("kind_j").selectedIndex==0) { 
+//message+="Δεν έχετε εισάγει το είδος του εξοπλισμού!\n";
+//}
+if (document.getElementById("code_j").value==0) { 
+message+="Δεν έχετε εισάγει τον κωδικό του μηχανήματος!\n";
+}
+if (document.getElementById("supplier_j").selectedIndex==0) { 
+message+="Δεν έχετε εισάγει τον προμηθευτή!\n";
+}
+if (document.getElementById("day_j").selectedIndex==0) { 
+message+="Δεν έχετε εισάγει ημέρα!\n";
+}
+if (document.getElementById("month_j").selectedIndex==0) { 
+message+="Δεν έχετε εισάγει μήνα!\n";
+}
+if (document.getElementById("year_j").selectedIndex==0) { 
+message+="Δεν έχετε εισάγει έτος!\n";
+}
+if (document.getElementById("invoice_j").value==0) { 
+message+="Δεν έχετε εισάγει τον αριθμό τιμολογίου!\n";
+}
+
+if (message!="") {
+alert (message); 
+return false
+}
+}
+
+
+
+function sub_choice(number) {
+document.getElementById("final_choice").value=number;
+return false
+}
+
+
+function sub_choice_malf_show(number) {
+document.getElementById("choice_number_malf_show").value=number;
+return false
+}
+
+
+
+
+function reset_others(number) {
+switch (number)
+{
+case 1:
+document.getElementById("type_j_eq").value="";
+document.getElementById("code_j_eq").value="";
+break;
+
+case 2:
+document.getElementById("check_j_all").value="";
+document.getElementById("code_j_eq").value="";
+break;
+
+case 3:
+document.getElementById("check_j_all").value="";
+document.getElementById("type_j_eq").value="";
+break;
+}
+return false
+}
+
+
