@@ -1,0 +1,444 @@
+var number_clicks=0;
+
+
+//allagi tou xrwmatos tou koumpiou me diplo klik
+function checkWeekTwo(number) {
+number_clicks++;
+if ((number_clicks % 2)==1) {
+//alert("exei pati8ei PERITTO ari8mo forwn!");
+var temp_week=('week_' + number);
+if (document.getElementById(temp_week).style.backgroundColor == "blue") {
+document.getElementById(temp_week).style.backgroundColor = ""; 
+}
+else if (document.getElementById(temp_week).style.backgroundColor == "") {
+document.getElementById(temp_week).style.backgroundColor = "blue"; 
+}
+}
+
+if ((number_clicks % 2) == 0) {
+//alert("exei pati8ei ARTIO ari8mo forwn!");
+var temp_week=('week_' + number);
+if (document.getElementById(temp_week).style.backgroundColor == "blue") {
+document.getElementById(temp_week).style.backgroundColor = "blue"; 
+}
+else if (document.getElementById(temp_week).style.backgroundColor == "") {
+document.getElementById(temp_week).style.backgroundColor = ""; 
+}
+}
+}
+
+
+//allagi tou xrwmatos tou koumpiou me diplo klik
+function checkMonthTwo(number) {
+number_clicks++;
+if ((number_clicks % 2)==1) {
+//alert("exei pati8ei PERITTO ari8mo forwn!");
+var temp_month=('month_' + number);
+if (document.getElementById(temp_month).style.backgroundColor == "blue") {
+document.getElementById(temp_month).style.backgroundColor = ""; 
+}
+else if (document.getElementById(temp_month).style.backgroundColor == "") {
+document.getElementById(temp_month).style.backgroundColor = "blue"; 
+}
+}
+
+if ((number_clicks % 2) == 0) {
+//alert("exei pati8ei ARTIO ari8mo forwn!");
+var temp_month=('month_' + number);
+if (document.getElementById(temp_month).style.backgroundColor == "blue") {
+document.getElementById(temp_month).style.backgroundColor = "blue"; 
+}
+else if (document.getElementById(temp_month).style.backgroundColor == "") {
+document.getElementById(temp_month).style.backgroundColor = ""; 
+}
+}
+}
+
+
+
+//Emfanizei kata periptwsi to timetable gia ebdomada 'i gia mina
+function chooseTwo(sixnotita) {
+
+	//PERIPTWSH 1 - Den exei epilegei akomi xronoprogrammatismos
+if (sixnotita == "0") {
+  resetAllTwo()
+}
+
+	//PERIPTWSH 2 - Ka8e 1 ebdomada
+if (sixnotita == "1") {
+  resetAllTwo()
+  document.getElementById("ena_edit_tr").style.display="";
+  clearWeekTwo()
+  for (var j=1;j<53;j++) {
+  var temp1=('week_' + j);
+  document.getElementById(temp1).style.backgroundColor="blue";
+  }
+}
+
+	//PERIPTWSH 3 - Ka8e 2 ebdomades
+if (sixnotita == "2") {
+  resetAllTwo()
+  document.getElementById("ena_edit_tr").style.display="";
+  clearWeekTwo()
+  for (var j=2;j<53;j+=2) {
+  var temp2=('week_' + j);
+  document.getElementById(temp2).style.backgroundColor="blue";
+  }
+}
+
+	//PERIPTWSH 4 - Ka8e 1 mina
+if (sixnotita=="3") {
+  resetAllTwo()
+  document.getElementById("dio_edit_tr").style.display="";
+  clearMonthTwo()
+  for (var j=1;j<13;j++) {
+  var temp3=('month_' + j);
+  document.getElementById(temp3).style.backgroundColor="blue";
+  }
+}
+
+	//PERIPTWSH 5 - Ka8e 2 mines
+if (sixnotita=="4") {
+  resetAllTwo()
+  document.getElementById("dio_edit_tr").style.display="";
+  clearMonthTwo()
+  for (var j=2;j<13;j+=2) {
+  var temp4=('month_' + j);
+  document.getElementById(temp4).style.backgroundColor="blue";
+  }
+}
+
+	//PERIPTWSH 6 - Ka8e 3 mines
+if (sixnotita=="5") {
+  resetAllTwo()
+  document.getElementById("dio_edit_tr").style.display="";
+  clearMonthTwo()
+  for (var j=1;j<13;j+=3) {
+  var temp5=('month_' + j);
+  document.getElementById(temp5).style.backgroundColor="blue";
+  }
+}
+
+	//PERIPTWSH 6 - Ka8e 4 mines
+if (sixnotita=="6") {
+  resetAllTwo()
+  document.getElementById("dio_edit_tr").style.display="";
+  clearMonthTwo()
+  for (var j=1;j<13;j+=4) {
+  var temp6=('month_' + j);
+  document.getElementById(temp6).style.backgroundColor="blue";
+  }
+}
+
+	//PERIPTWSH 7 - Ka8e 6 mines
+if (sixnotita=="7") {
+  resetAllTwo()
+  document.getElementById("dio_edit_tr").style.display="";
+  clearMonthTwo()
+  for (var j=1;j<13;j+=6) {
+  var temp7=('month_' + j);
+  document.getElementById(temp7).style.backgroundColor="blue";
+  }
+}
+
+	//PERIPTWSH 8 - Ka8e 1 xrono
+if (sixnotita=="8") {
+  resetAllTwo()
+  document.getElementById("dio_edit_tr").style.display="";
+  clearMonthTwo()
+  for (var j=1;j<13;j+=12) {
+  var temp8=('month_' + j);
+  document.getElementById(temp8).style.backgroundColor="blue";
+  }
+}
+}// end of function chooseTwo()
+
+
+
+//Exafanizei kai tous dio pinakes me to timetable
+function resetAllTwo() {
+  document.getElementById("ena_edit_tr").style.display="none";
+  document.getElementById("dio_edit_tr").style.display="none";
+ }
+
+
+
+function clearWeekTwo() {
+for (var j=1;j<53;j++) {
+  var temp=('week_' + j);
+  document.getElementById(temp).style.backgroundColor="";
+  }
+}
+
+
+
+function clearMonthTwo() {
+for (var j=1;j<13;j++) {
+  var temp=('month_' + j);
+  document.getElementById(temp).style.backgroundColor="";
+  }
+}
+
+
+
+//ELEGXOS GIA TO POSA KAI POIA MPLE KOYMPIA EXOYN PATH8EI
+function checkButtonTwo() {
+var button_count=0;
+var button_id=new Array();
+var i=0;
+var n=0;
+
+var test_freq_type=document.form_edit_timetable.freq_maint_edit.options[document.form_edit_timetable.freq_maint_edit.selectedIndex].value;
+var month_status=document.form_edit_timetable.get_month_status.value;
+var week_status=document.form_edit_timetable.get_week_status.value;
+
+//ELEGXOS A
+//TA TELIKA KOYMPIA POY PATH8HKAN GIA TIS EBDOMADES
+if ((test_freq_type==1 || test_freq_type==2) || month_status=="-%-" ) {
+for (var k=1;k<53;k++) {
+  var week_button=('week_' + k);
+  if (document.getElementById(week_button).style.backgroundColor=="blue") {
+  button_count++; //POSA MPLE KOYMPIA
+  button_id[n]=k; //POIA MPLE KOYMPIA
+  }
+  n++;
+  }
+  var checked_buttons=button_id.join(",");
+  var str=new String();
+  var str=checked_buttons;
+  var epistrofi=new String();
+ epistrofi=normalizeTwo(str);
+ document.form_edit_timetable.check_week_string.value = epistrofi;
+ 
+ var num_weeks=0;
+ num_weeks=button_count;
+ document.form_edit_timetable.check_num_weeks_string.value = num_weeks; 
+}
+
+//ELEGXOS B
+//TA TELIKA KOYMPIA POY PATH8HKAN GIA TOYS MHNES
+if ((test_freq_type>=3 && test_freq_type<=8) || week_status=="-%-") {
+for (var j=1;j<13;j++) {
+  var month_button=('month_' + j); 
+  //var i=0;
+  if (document.getElementById(month_button).style.backgroundColor=="blue") {
+ // i++;
+  button_count++; //POSA MPLE KOYMPIA
+  button_id[i]=j; //POIA MPLE KOYMPIA
+  }
+  i++;
+  }
+  var checked_buttons=button_id.join(",");
+  var str=new String();
+  var str=checked_buttons;
+  var epistrofi=new String();
+ epistrofi=normalizeTwo(str);
+ document.form_edit_timetable.check_month_string.value = epistrofi;
+ 
+ var num_months=0;
+ num_months=button_count;
+ document.form_edit_timetable.check_num_months_string.value = num_months; 
+}
+}
+////SOS: na valw elegxo gia tin periptwsi stin opoia den exei pati8ei to drop down box
+///px. 8a elegksw ean document.form_name.get_month_status==
+// sta simeia me elegxo A kai elegxo B, 8a valw na elegxei me to "if" ean vriskomaste me OR se MHNA 'H EBDOMADA
+
+//METATROPH THS EPISTREFOMENHS AKOLOY8IAS XARAKTHRWN SE APODEKTH MORFH (MHNAS,MHNAS,MHNAS, ktl.)
+function normalizeTwo(str) {
+
+while (str.indexOf(",,")!=-1) {
+var len=str.length;
+var double=str.indexOf(",,");
+var temp1=str.substr(0,double+1);
+var temp2=str.substr(double+2,len-1);
+str=temp1+temp2;
+len=str.length;
+}
+
+if (str.indexOf(",,")==-1) {
+var len=str.length;
+//elegxw arxi
+if (str.charAt(0)==",") {
+var temp3=str.substr(1);
+str=temp3;
+len=str.length;
+}
+//elegxw telos
+if (str.charAt(len-1)==",") {
+var temp4=str.substr(0,len-1);
+str=temp4;
+len=str.length;
+}
+var final=new String();
+final=str;
+return final;
+}
+}
+
+
+
+//emfanisi twn antistoixwn ebdomadwn pou iparxoun sti vasi
+function showWeekTwo(number) {
+  resetAllTwo();
+  document.getElementById("ena_edit_tr").style.display="";
+  clearWeekTwo();
+  for (var j=1;j<53;j++) {
+  if (j==number) {
+  var temp_show=('week_' + j);
+  document.getElementById(temp_show).style.backgroundColor="blue";
+  }
+}
+}
+
+
+//Diaxeirisi tou epistrefomenou pinaka apo ti php, o opoios emperiexei stoixeia tis Vasis
+function javascriptArrayTwo(string,type) {
+//PREPEI NA BRW TROPO NA KSEXWRIZW TIS EBDOMADES APO TOYS MHNES
+
+var timespace=new String();
+timespace=type;
+var str_final=new String();
+str_final=string;
+var str_final_mikos=str_final.length;
+
+
+//ARXIKOS ELEGXOS GIA EBDOMADES
+if (timespace=="week") {
+
+//YPO-PERIPTWSH POLLWN EBDOMADWN
+if (str_final.indexOf(",")!=-1) { 
+var count=0;
+for (var i=0;i<=str_final_mikos;i++) {
+if (str_final.charAt(i)==",") { count++; }
+} //end for
+count +=1;
+
+var split_string=str_final.split(",");
+var a=new String();
+var temp2=new String();
+
+document.getElementById("ena_edit_tr").style.display="";
+
+for (var t=0;t<count;t++) {
+a=split_string[t];
+var b=parseInt(a);
+
+temp2=('week_' + b);
+
+document.getElementById(temp2).style.backgroundColor="blue";
+
+for (var f=1;f<53;f++) {
+if (f==b) { 
+var temp_color=new String();
+
+temp_color=('week_' + b);
+document.getElementById(temp_color).style.backgroundColor="blue";
+} //end if
+} //end for
+
+} //end for
+
+
+} //end if polles ebdomades
+
+
+
+//YPO-PERIPTWSH MIAS EBDOMADOS
+if (str_final.indexOf(",")==-1 && str_final_mikos!=0) { 
+count=1; 
+temp2=('week_' + str_final);
+document.getElementById("ena_edit_tr").style.display="";
+document.getElementById(temp2).style.backgroundColor="blue";
+} 
+
+
+
+//YPO-PERIPTWSH KAMIAS EBDOMADOS
+if (str_final.indexOf(",")==-1 && str_final_mikos==0) { 
+count=0; 
+document.getElementById("ena_edit_tr").style.display="";
+alert("Δεν έχετε επιλέξει καμία εβδομάδα!!");
+} 
+} //end ELEGXOS GIA EBDOMADES
+
+
+
+//ARXIKOS ELEGXOS GIA MHNES
+if (timespace=="month") {
+//YPO-PERIPTWSH POLLWN MHNWN
+if (str_final.indexOf(",")!=-1) { 
+var count=0;
+for (var i=0;i<=str_final_mikos;i++) {
+if (str_final.charAt(i)==",") { count++; }
+} //end for
+count +=1;
+
+var split_string=str_final.split(",");
+var a=new String();
+var temp2=new String();
+
+document.getElementById("dio_edit_tr").style.display="";
+
+for (var t=0;t<count;t++) {
+a=split_string[t];
+var b=parseInt(a);
+
+temp2=('month_' + b);
+
+document.getElementById(temp2).style.backgroundColor="blue";
+
+for (var f=1;f<13;f++) {
+if (f==b) { 
+var temp_color=new String();
+
+temp_color=('month_' + b);
+document.getElementById(temp_color).style.backgroundColor="blue";
+} //end if
+} //end for
+
+} //end for
+} //end if polloi mines
+
+
+
+//YPO-PERIPTWSH ENOS MHNOS
+if (str_final.indexOf(",")==-1 && str_final_mikos!=0) { 
+count=1; 
+temp2=('month_' + str_final);
+document.getElementById("dio_edit_tr").style.display="";
+document.getElementById(temp2).style.backgroundColor="blue";
+} 
+
+
+
+//YPO-PERIPTWSH KANENOS MHNOS
+if (str_final.indexOf(",")==-1 && str_final_mikos==0) { 
+count=0; 
+document.getElementById("dio_edit_tr").style.display="";
+alert("Δεν έχετε επιλέξει κανένα μήνα!!");
+} 
+} //end ELEGXOS GIA MHNES
+
+
+}
+
+
+
+var message=new String();
+// elegxos gia ipoxrewtika pedia
+function validateTwo(form) {
+message=""; //arxikopoiw ti metabliti me keno, gia na min epanalambanontai ka8e fora oi elleipeis eisodoi!!
+
+if (document.getElementById("type_j").selectedIndex==0) { 
+message+="Δεν έχετε επιλέξει το είδος του εξοπλισμού!\n";
+}
+if (document.getElementById("year_j").selectedIndex==0) { 
+message+="Δεν έχετε επιλέξει το έτος συντήρησης!\n";
+}
+
+if (message!="") {
+alert (message); 
+return false
+}
+}
