@@ -1,0 +1,2231 @@
+<?php
+
+require_once("mainfile.php");
+$module_name = basename(dirname(__FILE__));
+require_once("modules/$module_name/common.php");
+
+get_lang($module_name);
+$pagetitle = "- Κατάσταση Αναλωσίμων Εκτυπωτών / Τηλεομοιοτυπικών / Φωτοτυπικών Μηχανημάτων ΒΚΠ";
+include("header.php");
+
+global $prefix,$db,$user,$userinfo,$usersection,$sectname;
+getusrinfo($user);
+
+$user_id=$userinfo[user_id];
+
+$user_name=$userinfo[username];
+$user_ip=getenv("REMOTE_ADDR");
+
+$temp=getusrsection($user_id);
+$staff_selection_id=$usersection[staff_section_id];
+$temp1=getusrsectname($usersection[staff_section_id]);
+getmanagesection();
+
+$db2 =mysql_connect("localhost", "root", "") or die(mysql_error());
+ if (!$db2)
+  {
+   die('Could not connect :'.mysql_error());
+  }
+ else
+ {
+  $db_select = mysql_select_db("equipment");
+  mysql_query("SET NAMES 'greek'",$db2);
+  if(!$db_select)
+  {
+    die('Could not select the database: <br />'.mysql_error());
+  }
+ }
+
+echo "<script language=\"javascript\" type=\"text/javascript\" src=\"modules/cartridges_toners/java_scripts.js\"></script>";
+
+opentable();
+
+echo "<table border=0><tr>";
+echo "<td align=center valign=top> <button style=\"width=200; height=50;\" "
+    ."onClick=\"javascript:window.location='modules.php?name=$module_name&amp;op=cartridge_create';\" >"
+    ."<table border=0 width=200 height=45><tr><td align=center valign=middle>Προσθήκη Νέας Κατηγορίας Αναλωσίμων</td></tr></button></table></td>";
+echo "<td align=center valign=top> <button style=\"width=200; height=50;\" "
+    ."onClick=\"javascript:window.location='modules.php?name=$module_name&amp;op=cartridge_show';\" >"
+    ."<table border=0 width=200 height=45><tr><td align=center valign=middle>Εμφάνιση Κατηγοριών Αναλωσίμων</td></tr></button></table></td>";
+echo "<td align=center valign=top> <button style=\"width=200; height=50;\" "
+    ."onClick=\"javascript:window.location='modules.php?name=$module_name&amp;op=cartridge_test_menu';\" >"
+    ."<table border=0 width=200 height=45><tr><td align=center valign=middle>Έλεγχος Αναλωσίμων Αποθήκης</td></tr></button></table></td>";
+echo "</tr></table>";
+
+
+closetable();
+
+
+
+opentable();
+
+?>
+
+
+
+
+<?php
+
+/////////////////////////////////////
+//					// dimiourgia neas katigorias analwsimwn
+//		FUNCTION 1 		//
+//					//
+/////////////////////////////////////
+
+function cartridge_create($db2,$db_select,$module_name,$sectname,$usersection,$managesection)
+{
+
+//periptwsi kata tin opoia 8elw na epilexw dimiourgia meta apo provoli
+//apostoli mesw link twn epilogwn sto paron arxeio gia dimiourgia
+$view_create_type = $_GET['view_create_type'];
+$view_create_model = $_GET['view_create_model'];
+
+
+/////////////
+// EISAGWGH
+/////////////
+
+
+if (!array_key_exists('cartr_create', $_POST) && !array_key_exists('update_cartridge', $_POST)) {  
+?>
+
+<b><u>Η συμπλήρωση όλων των πεδίων με (*) είναι υποχρεωτική</u></b>
+<br/><br/>
+
+<table cols="2" border="2" cellspacing="1" cellpadding="5">
+
+<form style="display:inline" name="cartridge" id="form_j_auto" action="modules.php?name=cartridges_toners&amp;op=cartridge_create" method="post" enctype="multipart/form-data" >
+
+
+
+<tr><td bgcolor=#D3E2EA colspan="6" align="center"><b>Κατηγορία Αναλωσίμου</b></td></tr>
+
+
+<tr><td bgcolor=#D3E2EA><b><label for="kind">Είδος Μονάδας *</label></b></td>
+<td colspan="5"><select name="kind_equipment_select" id="kind_j" method="post" onchange="document.getElementById('form_j_auto').submit();" >
+<option <?php if ($view_create_type=="" || $_POST['kind_equipment_select']=="") { echo "selected"; } ?>></option>
+<option <?php if ($view_create_type=="Copier" || $_POST['kind_equipment_select']=="Copier") { echo "selected"; } ?>>Copier</option>
+<option <?php if ($view_create_type=="Fax" || $_POST['kind_equipment_select']=="Fax") { echo "selected"; } ?>>Fax</option>
+<option <?php if ($view_create_type=="Printer" || $_POST['kind_equipment_select']=="Printer") { echo "selected"; } ?>>Printer</option>
+</select></td></tr>
+
+
+
+
+
+
+<tr><td bgcolor=#D3E2EA><b><label for="model">Μοντέλο Μηχανήματος *</label></b></td>
+<td colspan="5"><select name="model_select" id="model_j" method="post">
+
+<?php 
+if (!$_POST['kind_equipment_select'] && !$view_create_model) { echo "<option>--Επιλέξτε πρώτα Είδος Μονάδας--</option>"; }
+
+if (!$_POST['kind_equipment_select'] && $view_create_model) { echo "<option></option><option selected>$view_create_model</option>"; }
+
+if ($_POST['kind_equipment_select']) { 
+$temp_q=$_POST['kind_equipment_select'];
+$q_test_one="select distinct model from equipment.lis_equipment where type='".$temp_q."'";
+echo "<option></option>";
+$ret_test_one=mysql_query($q_test_one);
+$count_test_one=mysql_num_rows($ret_test_one);
+if ($count_test_one=='0') { echo "<option disabled='disabled'>--Δεν υπάρχει καταχώρηση--</option>"; }
+while ($count_test_one>0) {
+$count_test_one--;
+$row_test_one=mysql_fetch_assoc($ret_test_one);
+echo "<option>".$row_test_one["model"]."</option>";
+} //end of while
+} // end if
+
+
+
+
+?>
+</select></td></tr>
+
+
+<tr><td bgcolor=#D3E2EA><b><label for="black_toner">Τύπος Μαύρου Μελανιού *</label></b></td>
+<td><input type="text" name="black_toner_txt" id="black_j" value="<?php echo $_POST["black_toner_txt"]; ?>" /></td>
+<td bgcolor=#D3E2EA><b><label for="black_toner_number">Αριθμός Μαύρων Μελανιών</label></b></td>
+<td><input type="text" name="black_toner_number_txt" value="<?php echo $_POST["black_toner_number_txt"]; ?>" /></td>
+<td bgcolor=#D3E2EA><b><label for="black_toner_price">Τιμή Μονάδος (Ευρώ)</label></b></td>
+<td><input type="text" name="black_toner_price_txt" value="<?php echo $_POST["black_toner_price_txt"]; ?>" /></td></tr>
+
+<tr><td bgcolor=#D3E2EA><b><label for="color_toner">Τύπος Έγχρωμου Μελανιού</label></b></td>
+<td><input type="text" name="color_toner_txt" id="color_j" value="<?php echo $_POST["color_toner_txt"]; ?>" /></td>
+<td bgcolor=#D3E2EA><b><label for="color_toner_number">Αριθμός Έγχρωμων Μελανιών</label></b></td>
+<td><input type="text" name="color_toner_number_txt" value="<?php echo $_POST["color_toner_number_txt"]; ?>" /></td>
+<td bgcolor=#D3E2EA><b><label for="color_toner_price">Τιμή Μονάδος (Ευρώ)</label></b></td>
+<td><input type="text" name="color_toner_price_txt" value="<?php echo $_POST["color_toner_price_txt"]; ?>" /></td></tr>
+
+<tr><td bgcolor="cyan"><b><label for="cyan_toner">Τύπος 'Cyan' Μελανιού</label></b></td>
+<td><input type="text" name="cyan_toner_txt" id="cyan_j" value="<?php echo $_POST["cyan_toner_txt"]; ?>" /></td>
+<td bgcolor="cyan"><b><label for="cyan_toner_number">Αριθμός 'Cyan' Μελανιών</label></b></td>
+<td><input type="text" name="cyan_toner_number_txt" value="<?php echo $_POST["cyan_toner_number_txt"]; ?>" /></td>
+<td bgcolor="cyan"><b><label for="cyan_toner_price">Τιμή Μονάδος (Ευρώ)</label></b></td>
+<td><input type="text" name="cyan_toner_price_txt" value="<?php echo $_POST["cyan_toner_price_txt"]; ?>" /></td></tr>
+
+<tr><td bgcolor="magenta"><b><label for="magenta_toner">Τύπος 'Magenta' Μελανιού</label></b></td>
+<td><input type="text" name="magenta_toner_txt" id="magenta_j" value="<?php echo $_POST["magenta_toner_txt"]; ?>" /></td>
+<td bgcolor="magenta"><b><label for="magenta_toner_number">Αριθμός 'Magenta' Μελανιών</label></b></td>
+<td><input type="text" name="magenta_toner_number_txt" value="<?php echo $_POST["magenta_toner_number_txt"]; ?>" /></td>
+<td bgcolor="magenta"><b><label for="magenta_toner_price">Τιμή Μονάδος (Ευρώ)</label></b></td>
+<td><input type="text" name="magenta_toner_price_txt" value="<?php echo $_POST["magenta_toner_price_txt"]; ?>" /></td></tr>
+
+<tr><td bgcolor="yellow"><b><label for="yellow_toner">Τύπος 'Yellow' Μελανιού</label></b></td>
+<td><input type="text" name="yellow_toner_txt" id="yellow_j" value="<?php echo $_POST["yellow_toner_txt"]; ?>" /></td>
+<td bgcolor="yellow"><b><label for="yellow_toner_number">Αριθμός 'Yellow' Μελανιών</label></b></td>
+<td><input type="text" name="yellow_toner_number_txt" value="<?php echo $_POST["yellow_toner_number_txt"]; ?>" /></td>
+<td bgcolor="yellow"><b><label for="yellow_toner_price">Τιμή Μονάδος (Ευρώ)</label></b></td>
+<td><input type="text" name="yellow_toner_price_txt" value="<?php echo $_POST["yellow_toner_price_txt"]; ?>" /></td></tr>
+
+<tr><td bgcolor="D3E2EA"><b><label for="comments">Σχόλια</label></b></td>
+<td colspan="5"><textarea name="comments_txt" rows="4" cols="100" wrap="soft"><?php echo $_POST['comments_txt']; ?></textarea></td></tr>
+
+</table>
+<br/>
+<input type="submit" value="Δημιουργία" name="cartr_create" onclick="return validate(cartridge)" />
+<input type="reset" value="Εκκαθάριση" />
+<input type="hidden" value="<?php echo $_POST['kind_equipment_select']; ?>" name="kind_one" />
+<input type="hidden" value="<?php echo $_POST['model_select']; ?>" name="model_one" />
+</form>
+
+<br/><br/><i>
+[* Σε περίπτωση που δεν υπάρχει ο επιθυμητός συνδυασμός "Είδος Μονάδας-Μοντέλο Μηχανήματος", <br/>
+θα πρέπει πρώτα να δημιουργηθεί έστω και μία εγγραφή στο module 'Εξοπλισμός - Κάρτα Κατάστασης Λοιπού Εξοπλισμού (Α2)' *]</i>
+
+<?php 
+
+} //end if (!array_key_exists('cartr_create', $_POST) && !array_key_exists('update_cartridge', $_POST)) { 
+
+
+
+//periptwsi kata tin opoia 8elw na epilexw provoli meta apo dimiourgia
+//apostoli mesw link twn epilogwn sto paron arxeio gia dimiourgia
+///$view_create_type = $_GET['view_create_type'];
+///$view_create_model = $_GET['view_create_model'];
+
+//Tin prwti fora i imerominia dimiourgias 8a apotelei tin imerominia elegxou!
+
+$current = getdate();
+$day = $current['mday'];
+$month=$current['mon'];
+$year=$current['year'];
+$current_date=$year.'-'.$month.'-'.$day;
+
+
+
+
+///////////////////
+// PAROYSIASH
+//////////////////
+
+
+if (array_key_exists('cartr_create', $_POST) && !array_key_exists('update_cartridge', $_POST)) { 
+
+//AKOLOY8OYN OI ANA8ESEIS TWN ENDIAMESWN METABLHTWN PROKEIMENOY NA DIAXEIRISTOYME TO INSERTION STH BASH
+
+if ($_POST['kind_equipment_select']!="") { $kind=$_POST['kind_equipment_select']; } else { $kind='-'; }
+
+if ($_POST['model_select']!="") { $model=$_POST['model_select']; } else { $model='-'; }
+
+if ($_POST['black_toner_txt']!="") { $black=$_POST['black_toner_txt']; } else { $black='-'; }
+if ($_POST['color_toner_txt']!="") { $color=$_POST['color_toner_txt']; } else { $color='-'; }
+if ($_POST['cyan_toner_txt']!="") { $cyan=$_POST['cyan_toner_txt']; } else { $cyan='-'; }
+if ($_POST['magenta_toner_txt']!="") { $magenta=$_POST['magenta_toner_txt']; } else { $magenta='-'; }
+if ($_POST['yellow_toner_txt']!="") { $yellow=$_POST['yellow_toner_txt']; } else { $yellow='-'; }
+
+if ($_POST['black_toner_number_txt']!="") { $black_number=$_POST['black_toner_number_txt']; } else { $black_number='0'; }
+if ($_POST['color_toner_number_txt']!="") { $color_number=$_POST['color_toner_number_txt']; } else { $color_number='0'; }
+if ($_POST['cyan_toner_number_txt']!="") { $cyan_number=$_POST['cyan_toner_number_txt']; } else { $cyan_number='0'; }
+if ($_POST['magenta_toner_number_txt']!="") { $magenta_number=$_POST['magenta_toner_number_txt']; } else { $magenta_number='0'; }
+if ($_POST['yellow_toner_number_txt']!="") { $yellow_number=$_POST['yellow_toner_number_txt']; } else { $yellow_number='0'; }
+
+if ($_POST['black_toner_price_txt']!="") { $black_price=$_POST['black_toner_price_txt']; } else { $black_price='0'; }
+if ($_POST['color_toner_price_txt']!="") { $color_price=$_POST['color_toner_price_txt']; } else { $color_price='0'; }
+if ($_POST['cyan_toner_price_txt']!="") { $cyan_price=$_POST['cyan_toner_price_txt']; } else { $cyan_price='0'; }
+if ($_POST['magenta_toner_price_txt']!="") { $magenta_price=$_POST['magenta_toner_price_txt']; } else { $magenta_price='0'; }
+if ($_POST['yellow_toner_price_txt']!="") { $yellow_price=$_POST['yellow_toner_price_txt']; } else { $yellow_price='0'; }
+
+if ($_POST['comments_txt']!="") { $comments=$_POST['comments_txt']; } else { $comments='-'; }
+
+echo "Η επιλογή σας: <br/><br/>";
+?>
+
+
+<table cols="2" border="2" cellspacing="1" cellpadding="5">
+
+<tr><td bgcolor=#D3E2EA colspan="6" align="center"><b>Κατηγορία Αναλωσίμου</b></td></tr>
+
+<tr><td bgcolor=#D3E2EA><b><label for="kind">Είδος Μονάδας *</label></b></td>
+<td colspan="5"><select name="kind_equipment_select" id="kind_update_j" method="post">
+<option value="0"></option>
+<option value="1" <?php if ($kind=="Copier") { echo "selected"; } ?>>Copier</option>
+<option value="2" <?php if ($kind=="Fax") { echo "selected"; } ?>>Fax</option>
+<option value="3" <?php if ($kind=="Printer") { echo "selected"; } ?>>Printer</option>
+</select></td></tr>
+
+<tr><td bgcolor=#D3E2EA><b><label for="model">Μοντέλο Μηχανήματος *</label></b></td>
+<td colspan="5"><select name="model_select" id="model_update_j" method="post">
+<option ></option>
+<?php
+
+$dbname = 'equipment';
+mysql_select_db($dbname);
+
+$query1="select distinct model from equipment.lis_equipment where (type='Printer' OR type='Fax' OR type='Copier')";
+$ret1=mysql_query($query1);
+$count1=mysql_num_rows($ret1);
+while ($count1>0) {
+$count1--;
+$row1=mysql_fetch_assoc($ret1);
+if ($row1['model']==$model) { echo "<option selected>".$row1['model']."</option>"; }
+else if ($row1['model']!=$model) { echo "<option disabled='disabled'>".$row1['model']."</option>"; }
+}
+
+?>
+</select></td></tr>
+
+<tr><td bgcolor=#D3E2EA><b><label for="black_toner">Τύπος Μαύρου Μελανιού *</label></b></td>
+<td><input type="text" name="black_toner_txt" id="black_update_j" value='<?php echo $black; ?>'/></td>
+<td bgcolor=#D3E2EA><b><label for="black_toner_number">Αριθμός Μαύρων Μελανιών</label></b></td>
+<td><input type="text" name="black_toner_number_txt" value='<?php echo $black_number; ?>' /></td>
+<td bgcolor=#D3E2EA><b><label for="black_toner_price">Τιμή Μονάδος (Ευρώ)</label></b></td>
+<td><input type="text" name="black_toner_price_txt" value='<?php echo $black_price; ?>' /></td></tr>
+
+<tr><td bgcolor=#D3E2EA><b><label for="color_toner">Τύπος Έγχρωμου Μελανιού</label></b></td>
+<td><input type="text" name="color_toner_txt" value='<?php echo $color; ?>' /></td>
+<td bgcolor=#D3E2EA><b><label for="color_toner_number">Αριθμός Έγχρωμων Μελανιών</label></b></td>
+<td><input type="text" name="color_toner_number_txt" value='<?php echo $color_number; ?>' /></td>
+<td bgcolor=#D3E2EA><b><label for="color_toner_price">Τιμή Μονάδος (Ευρώ)</label></b></td>
+<td><input type="text" name="color_toner_price_txt" value='<?php echo $color_price; ?>' /></td></tr>
+
+<tr><td bgcolor="cyan"><b><label for="cyan_toner">Τύπος 'Cyan' Μελανιού</label></b></td>
+<td><input type="text" name="cyan_toner_txt" value='<?php echo $cyan; ?>' /></td>
+<td bgcolor="cyan"><b><label for="cyan_toner_number">Αριθμός 'Cyan' Μελανιών</label></b></td>
+<td><input type="text" name="cyan_toner_number_txt" value='<?php echo $cyan_number; ?>' /></td>
+<td bgcolor="cyan"><b><label for="cyan_toner_price">Τιμή Μονάδος (Ευρώ)</label></b></td>
+<td><input type="text" name="cyan_toner_price_txt" value='<?php echo $cyan_price; ?>' /></td></tr>
+
+<tr><td bgcolor="magenta"><b><label for="magenta_toner">Τύπος 'Magenta' Μελανιού</label></b></td>
+<td><input type="text" name="magenta_toner_txt" value='<?php echo $magenta; ?>' /></td>
+<td bgcolor="magenta"><b><label for="magenta_toner_number">Αριθμός 'Magenta' Μελανιών</label></b></td>
+<td><input type="text" name="magenta_toner_number_txt" value='<?php echo $magenta_number; ?>' /></td>
+<td bgcolor="magenta"><b><label for="magenta_toner_price">Τιμή Μονάδος (Ευρώ)</label></b></td>
+<td><input type="text" name="magenta_toner_price_txt" value='<?php echo $magenta_price; ?>' /></td></tr>
+
+<tr><td bgcolor="yellow"><b><label for="yellow_toner">Τύπος 'Yellow' Μελανιού</label></b></td>
+<td><input type="text" name="yellow_toner_txt" value='<?php echo $yellow; ?>'/></td>
+<td bgcolor="yellow"><b><label for="yellow_toner_number">Αριθμός 'Yellow' Μελανιών</label></b></td>
+<td><input type="text" name="yellow_toner_number_txt" value='<?php echo $yellow_number; ?>' /></td>
+<td bgcolor="yellow"><b><label for="yellow_toner_price">Τιμή Μονάδος (Ευρώ)</label></b></td>
+<td><input type="text" name="yellow_toner_price_txt" value='<?php echo $yellow_price; ?>' /></td></tr>
+
+<tr><td bgcolor="D3E2EA"><b><label for="comments">Σχόλια</label></b></td>
+<td colspan="5"><textarea name="comments_txt" rows="4" cols="100" wrap="soft" ><?php echo $comments; ?></textarea></td></tr>
+
+</table>
+<br/>
+
+
+
+<?php
+
+//Elegxos sti dimiourgia ean iparxei idi kataxwrisi tou sindiasmou "Eidos Monados" kai "Montelo Mixanimatos"
+//Ean oxi, tote 8a ginetai kanonika to insertion
+//Ean iparxei, tote 8a prepei na erwtatai o xristis gia to ean 8elei na perasei ta kainouria stoixeia sti 8esi twn paliwn kataxwrimenwn
+
+$query_test="select * from equipment.cartridge_toner where eq_type='".$kind."' AND model='".$model."' limit 1";
+$return_test=mysql_query($query_test);
+$count_test=mysql_num_rows($return_test);
+$row_test=mysql_fetch_array($return_test);
+
+// Palies times pou iparxoun idi sti vasi, gia provoli se periptwsi pou epi8imoume tin allagi tous
+$old_eq_type=$row_test['eq_type'];
+$old_model=$row_test['model'];
+
+$old_black_toner=$row_test['black_toner'];
+$old_color_toner=$row_test['color_toner'];
+$old_cyan_toner=$row_test['cyan_toner'];
+$old_magenta_toner=$row_test['magenta_toner'];
+$old_yellow_toner=$row_test['yellow_toner'];
+
+$old_black_quantity=$row_test['black_quantity'];
+$old_color_quantity=$row_test['color_quantity'];
+$old_cyan_quantity=$row_test['cyan_quantity'];
+$old_magenta_quantity=$row_test['magenta_quantity'];
+$old_yellow_quantity=$row_test['yellow_quantity'];
+
+$old_black_price=$row_test['black_price'];
+$old_color_price=$row_test['color_price'];
+$old_cyan_price=$row_test['cyan_price'];
+$old_magenta_price=$row_test['magenta_price'];
+$old_yellow_price=$row_test['yellow_price'];
+
+$old_comments=$row_test['comment'];
+
+//periptwsi iparxis tis kataxwrisis sti vasi
+if ($count_test==1) {
+
+echo "Υπάρχει ήδη στη βάση, με τα ακόλουθα στοιχεία: <br/><br/>";
+
+?>
+
+<table cols="2" border="2" cellspacing="1" cellpadding="5">
+
+<tr><td bgcolor=#D3E2EA colspan="6" align="center"><b>Κατηγορία Αναλωσίμου</b></td></tr>
+
+<tr><td bgcolor=#D3E2EA><b><label for="kind">Είδος Μονάδας *</label></b></td>
+<td colspan="5"><select name="kind_equipment_select" id="kind_j" method="post">
+<option value="0"></option>
+<option value="1" <?php if ($kind=="Copier") { echo "selected"; } ?>>Copier</option>
+<option value="2" <?php if ($kind=="Fax") { echo "selected"; } ?>>Fax</option>
+<option value="3" <?php if ($kind=="Printer") { echo "selected"; } ?>>Printer</option>
+</select></td></tr>
+
+<tr><td bgcolor=#D3E2EA><b><label for="model">Μοντέλο Μηχανήματος *</label></b></td>
+<td colspan="5"><select name="model_select" method="post">
+<option ></option>
+<?php
+
+$dbname = 'equipment';
+mysql_select_db($dbname);
+
+$query1="select id,model from equipment.lis_equipment where (type='Printer' OR type='Fax' OR type='Copier')";
+$ret1=mysql_query($query1);
+$count1=mysql_num_rows($ret1);
+while ($count1>0) {
+$count1--;
+$row1=mysql_fetch_assoc($ret1);
+if ($row1['model']==$old_model) { echo "<option selected>".$row1['model']."</option>"; }
+else if ($row1['model']!=$old_model) { echo "<option >".$row1['model']."</option>"; }
+}
+
+?>
+</select></td></tr>
+
+<tr><td bgcolor=#D3E2EA><b><label for="black_toner">Τύπος Μαύρου Μελανιού *</label></b></td>
+<td><input type="text" name="black_toner_txt" value='<?php echo $old_black_toner; ?>' readonly/></td>
+<td bgcolor=#D3E2EA><b><label for="black_toner_number">Αριθμός Μαύρων Μελανιών</label></b></td>
+<td><input type="text" name="black_toner_number_txt" value='<?php echo $old_black_quantity; ?>' readonly/></td>
+<td bgcolor=#D3E2EA><b><label for="black_toner_price">Τιμή Μονάδος (Ευρώ)</label></b></td>
+<td><input type="text" name="black_toner_price_txt" value='<?php echo $old_black_price; ?>' readonly/></td></tr>
+
+<tr><td bgcolor=#D3E2EA><b><label for="color_toner">Τύπος Έγχρωμου Μελανιού</label></b></td>
+<td><input type="text" name="color_toner_txt" value='<?php echo $old_color_toner; ?>' readonly/></td>
+<td bgcolor=#D3E2EA><b><label for="color_toner_number">Αριθμός Έγχρωμων Μελανιών</label></b></td>
+<td><input type="text" name="color_toner_number_txt" value='<?php echo $old_color_quantity; ?>' readonly/></td>
+<td bgcolor=#D3E2EA><b><label for="color_toner_price">Τιμή Μονάδος (Ευρώ)</label></b></td>
+<td><input type="text" name="color_toner_price_txt" value='<?php echo $old_color_price; ?>' readonly/></td></tr>
+
+<tr><td bgcolor="cyan"><b><label for="cyan_toner">Τύπος 'Cyan' Μελανιού</label></b></td>
+<td><input type="text" name="cyan_toner_txt" value='<?php echo $old_cyan_toner; ?>' readonly/></td>
+<td bgcolor="cyan"><b><label for="cyan_toner_number">Αριθμός 'Cyan' Μελανιών</label></b></td>
+<td><input type="text" name="cyan_toner_number_txt" value='<?php echo $old_cyan_quantity; ?>' readonly/></td>
+<td bgcolor="cyan"><b><label for="cyan_toner_price">Τιμή Μονάδος (Ευρώ)</label></b></td>
+<td><input type="text" name="cyan_toner_price_txt" value='<?php echo $old_cyan_price; ?>' readonly/></td></tr>
+
+<tr><td bgcolor="magenta"><b><label for="magenta_toner">Τύπος 'Magenta' Μελανιού</label></b></td>
+<td><input type="text" name="magenta_toner_txt" value='<?php echo $old_magenta_toner; ?>' readonly/></td>
+<td bgcolor="magenta"><b><label for="magenta_toner_number">Αριθμός 'Magenta' Μελανιών</label></b></td>
+<td><input type="text" name="magenta_toner_number_txt" value='<?php echo $old_magenta_quantity; ?>' readonly/></td>
+<td bgcolor="magenta"><b><label for="magenta_toner_price">Τιμή Μονάδος (Ευρώ)</label></b></td>
+<td><input type="text" name="magenta_toner_price_txt" value='<?php echo $old_magenta_price; ?>' readonly/></td></tr>
+
+<tr><td bgcolor="yellow"><b><label for="yellow_toner">Τύπος 'Yellow' Μελανιού</label></b></td>
+<td><input type="text" name="yellow_toner_txt" value='<?php echo $old_yellow_toner; ?>' readonly/></td>
+<td bgcolor="yellow"><b><label for="yellow_toner_number">Αριθμός 'Yellow' Μελανιών</label></b></td>
+<td><input type="text" name="yellow_toner_number_txt" value='<?php echo $old_yellow_quantity; ?>' readonly/></td>
+<td bgcolor="yellow"><b><label for="yellow_toner_price">Τιμή Μονάδος (Ευρώ)</label></b></td>
+<td><input type="text" name="yellow_toner_price_txt" value='<?php echo $old_yellow_price; ?>' readonly/></td></tr>
+
+<tr><td bgcolor="D3E2EA"><b><label for="comments">Σχόλια</label></b></td>
+<td colspan="5"><textarea name="comments_txt" rows="4" cols="100" wrap="soft" readonly><?php echo $old_comments; ?></textarea></td></tr>
+
+</table>
+<br/>
+Σε περίπτωση που επιθυμείτε να ενημερώσετε την καταχώρηση και να περάσετε στη βάση τον πάνω πίνακα, επιλέξτε "Ενημέρωση". <br/><br/>
+Σε περίπτωση που θέλετε να επιστρέψετε στην προηγούμενη σελίδα, επιλέξτε "Επιστροφή". <br/><br/>
+
+<form style="display:inline" name="update_cartridge_form" action="modules.php?name=cartridges_toners&amp;op=cartridge_create" method="post" enctype="multipart/form-data">
+<input type="submit" value="Ενημέρωση" name="update_cartridge"  />
+<input type="reset" value="Επιστροφή" name="cartridge_restore" onclick="javascript: history.go(-1)" />
+
+<input type="hidden" value="<?php echo $row_test['id']; ?>" name="cartridge_id"  />
+<input type="hidden" value="<?php echo $kind; ?>" name="kind"  />
+<input type="hidden" value="<?php echo $model; ?>" name="model"  />
+
+<input type="hidden" value="<?php echo $black; ?>" name="black_toner_txt"  />
+<input type="hidden" value="<?php echo $color; ?>" name="color_toner_txt"  />
+<input type="hidden" value="<?php echo $cyan; ?>" name="cyan_toner_txt"  />
+<input type="hidden" value="<?php echo $magenta; ?>" name="magenta_toner_txt"  />
+<input type="hidden" value="<?php echo $yellow; ?>" name="yellow_toner_txt"  />
+
+<input type="hidden" value="<?php echo $black_number; ?>" name="black_number"  />
+<input type="hidden" value="<?php echo $color_number; ?>" name="color_number"  />
+<input type="hidden" value="<?php echo $cyan_number; ?>" name="cyan_number"  />
+<input type="hidden" value="<?php echo $magenta_number; ?>" name="magenta_number"  />
+<input type="hidden" value="<?php echo $yellow_number; ?>" name="yellow_number"  />
+
+<input type="hidden" value="<?php echo $black_price; ?>" name="black_price"  />
+<input type="hidden" value="<?php echo $color_price; ?>" name="color_price"  />
+<input type="hidden" value="<?php echo $cyan_price; ?>" name="cyan_price"  />
+<input type="hidden" value="<?php echo $magenta_price; ?>" name="magenta_price"  />
+<input type="hidden" value="<?php echo $yellow_price; ?>" name="yellow_price"  />
+
+<input type="hidden" value="<?php echo $comments; ?>" name="comments"  />
+
+</form>
+
+<?php
+
+
+} //end if ($count_test==1)
+
+
+//periptwsi mi iparxis tis kataxwrisis sti vasi
+else if ($count_test!=1) {
+
+//Eisagwgi twn stoixeiwn tis formas sti basi
+$query_ins="insert into equipment.cartridge_toner ".
+"(eq_type,model,black_toner,color_toner,cyan_toner,magenta_toner,yellow_toner,".
+"black_quantity,color_quantity,cyan_quantity,magenta_quantity,yellow_quantity,".
+"black_price,color_price,cyan_price,magenta_price,yellow_price,comment,date_check)".
+" values ".
+"('$kind','$model','$black','$color','$cyan','$magenta','$yellow',".
+"'$black_number','$color_number','$cyan_number','$magenta_number','$yellow_number',".
+"'$black_price','$color_price','$cyan_price','$magenta_price','$yellow_price','$comments','$current_date')";
+
+$ret_ins=mysql_query($query_ins);
+
+echo "Καταχωρήθηκε επιτυχώς!<br/><br/>";
+echo "Πατήστε  <a href='http://150.140.152.10/mylis/modules.php?name=cartridges_toners&amp;op=cartridge_show&amp;view_create_type=$kind&amp;view_create_model=$model'>εδώ</a> για να επιλέξετε κάποια κατηγορία αναλωσίμου.";
+
+
+} //end else if ($count_test!=1)
+
+} //end if (array_key_exists('cartr_create', $_POST) && !array_key_exists('update_cartridge', $_POST))
+
+
+
+
+
+//***************
+// ANANEWSH
+//**************
+
+
+if (array_key_exists('update_cartridge', $_POST)) { 
+
+//Ananewsi tis iparxousas kataxwrisis sti BD
+
+$current_2 = getdate();
+$day_2 = $current_2['mday'];
+$month_2=$current_2['mon'];
+$year_2=$current_2['year'];
+$current_date_2=$year_2.'-'.$month_2.'-'.$day_2;
+
+
+$query_update="update equipment.cartridge_toner set eq_type='".$_POST['kind']."', model='".$_POST['model']."', black_toner='".$_POST['black_toner_txt'].
+"', color_toner='".$_POST['color_toner_txt']."', cyan_toner='".$_POST['cyan_toner_txt']."', magenta_toner='".$_POST['magenta_toner_txt']."', yellow_toner='".$_POST['yellow_toner_txt'].
+"', black_quantity='".$_POST['black_number']."', color_quantity='".$_POST['color_number']."', cyan_quantity='".$_POST['cyan_number']."', magenta_quantity='".$_POST['magenta_number']."', yellow_quantity='".$_POST['yellow_number'].
+"', black_price='".$_POST['black_price']."', color_price='".$_POST['color_price']."', cyan_price='".$_POST['cyan_price']."', magenta_price='".$_POST['magenta_price']."', yellow_price='".$_POST['yellow_price'].
+"', comment='".$_POST['comments']."', date_check='$current_date_2' where id='".$_POST['cartridge_id']."'";
+$return_update=mysql_query($query_update);
+
+$type_m=$_POST['kind'];
+$model_m=$_POST['model'];
+
+echo "Η ενημέρωση της βάσης ολοκληρώθηκε με επιτυχία!<br/><br/>";
+echo "Παρακαλώ πατήστε <a href='http://150.140.152.10/mylis/modules.php?name=cartridges_toners&amp;op=cartridge_show&amp;view_create_type=$type_m&amp;view_create_model=$model_m'>εδώ</a> για να επιλέξετε κάποια κατηγορία αναλωσίμου.";
+
+} // end if (array_key_exists('update_cartridge', $_POST)) { 
+
+} // end of FUNCTION 1
+
+?>
+
+
+
+
+
+
+
+
+<?php
+
+/////////////////////////////////////
+//					// provoli katigoriwn analwsimwn
+//		FUNCTION 2 		//
+//					//
+/////////////////////////////////////
+
+function cartridge_show($db2,$db_select,$module_name,$sectname,$usersection,$managesection)
+{
+
+//periptwsi kata tin opoia 8elw na epilexw proboli meta apo dimiourgia
+//apostoli mesw link twn epilogwn sto paron arxeio gia dimiourgia
+$view_create_type = $_GET['view_create_type'];
+$view_create_model = $_GET['view_create_model'];
+
+if (!array_key_exists('cartridge_submit_show', $_POST) && !array_key_exists('update_show', $_POST) && !array_key_exists('confirm_final',$_POST)) 
+{
+
+?>
+
+<b><u>Η συμπλήρωση όλων των πεδίων με (*) είναι υποχρεωτική</u></b>
+<br/><br/>
+
+<form style="display:inline" name="cartridge_show" id="form_j_submit" action="modules.php?name=cartridges_toners&amp;op=cartridge_show" method="post" enctype="multipart/form-data" >
+
+<table cols="2" border="2" cellspacing="1" cellpadding="5">
+
+<tr><td bgcolor=#D3E2EA colspan="4" align="center"><b>Κατηγορία Αναλωσίμου</b></td></tr>
+
+<tr><td bgcolor=#D3E2EA><b><label for="kind_show">Είδος Μονάδας *</label></b></td>
+<td colspan="3"><select name="kind_equipment_show_select" id="kind_show_j" method="post" onchange="document.getElementById('form_j_submit').submit();" >
+<option ></option>
+<option <?php if ($view_create_type=='Copier' || $_POST['kind_equipment_show_select']=='Copier') { echo 'selected'; } ?>>Copier</option>
+<option <?php if ($view_create_type=='Fax' || $_POST['kind_equipment_show_select']=='Fax') { echo "selected"; } ?>>Fax</option>
+<option <?php if ($view_create_type=='Printer' || $_POST['kind_equipment_show_select']=='Printer') { echo "selected"; } ?>>Printer</option>
+</select></td></tr>
+
+<tr><td bgcolor=#D3E2EA><b><label for="model_show">Μοντέλο Μηχανήματος *</label></b></td>
+<td colspan="3"><select name="model_show_select" id="model_show_j" method="post">
+<?php
+
+if (!$_POST['kind_equipment_show_select'] && !$view_create_model) { echo "<option>--Επιλέξτε πρώτα Είδος Μονάδας--</option>"; }
+
+if (!$_POST['kind_equipment_show_select'] && $view_create_model) { echo "<option></option><option selected>$view_create_model</option>"; }  // KALH ME8ODOS!!!
+
+if ($_POST['kind_equipment_show_select']) 
+{
+$query_show_drop="select distinct model from equipment.lis_equipment where type='".$_POST['kind_equipment_show_select']."'";
+echo "<option></option>";
+$ret_show_drop=mysql_query($query_show_drop);
+$count_show_drop=mysql_num_rows($ret_show_drop);
+while ($count_show_drop>0) {
+$count_show_drop--;
+$row_show_drop=mysql_fetch_assoc($ret_show_drop);
+if ($view_create_model==$row_show_drop["model"]) { echo "<option selected>".$row_show_drop['model']."</option>"; } 
+else if ($view_create_model!=$row_show_drop["model"]) { echo "<option>".$row_show_drop['model']."</option>"; } 
+}
+}
+
+?>
+</select></td></tr></table><br/>
+<input type="submit" value="Προβολή" name="cartridge_submit_show" onclick="return validate_show(cartridge_show)"/>
+</form>
+<br/><br/><i>
+[* Σε περίπτωση που δεν υπάρχει ο επιθυμητός συνδυασμός "Είδος Μονάδας-Μοντέλο Μηχανήματος", <br/>
+θα πρέπει πρώτα να δημιουργηθεί έστω και μία εγγραφή στο module 'Εξοπλισμός - Κάρτα Κατάστασης Λοιπού Εξοπλισμού (Α2)' *]</i>
+
+<?php 
+} // end if !array_key_exists('cartridge_submit_show', $_POST) && !array_key_exists('update_show', $_POST) && !array_key_exists('confirm_final',$_POST)
+?>
+
+
+<?php
+
+
+
+//PRWTO TREXIMO TOY ARXEIOY
+if (array_key_exists('cartridge_submit_show', $_POST) && !array_key_exists('update_show', $_POST) && !array_key_exists('confirm_final',$_POST)) {
+
+//periptwsi kata tin opoia 8elw na epilexw proboli meta apo dimiourgia
+//apostoli mesw link twn epilogwn sto paron arxeio gia dimiourgia
+$view_create_type = $_GET['view_create_type'];
+$view_create_model = $_GET['view_create_model'];
+
+?>
+
+<?php
+
+
+switch ($_POST['kind_equipment_show_select']) {
+case "":
+  $type_m='-';
+  break;
+case "Copier":
+  $type_m='Copier';
+  break;
+case "Fax":
+  $type_m='Fax';
+  break;
+case "Printer":
+  $type_m='Printer';
+  break;
+}
+// to $type_m periexei to eidos tou mixanimatos (printer,fax,copier)
+
+$model_m=$_POST['model_show_select'];
+// to $model_m periexei to montelo tou sigkekrimenou eidous mixanimatos
+
+$query_show="select * from equipment.cartridge_toner where eq_type='".$type_m."' and model='".$model_m."' limit 1";
+$return_query_show=mysql_query($query_show);
+$count_query_show=mysql_num_rows($return_query_show);
+?>
+
+
+<form style="display:inline" name="form_edit_timetable" action="modules.php?name=cartridges_toners&amp;op=cartridge_show" onsubmit="return validate_update(form_edit_timetable)" method="post" enctype="multipart/form-data">
+
+<table cols="6" border="2" cellspacing="1" cellpadding="5">
+
+<tr><td bgcolor=#D3E2EA colspan="6" align="center"><b>Κατηγορία Αναλωσίμου</b></td></tr>
+
+<tr><td bgcolor="#D3E2EA" colspan="4" align="center"><b>Είδος Μονάδας *</b></td>
+<td colspan="2">
+<select name="type_cartr" id="kind_update_j" method="post" >
+<option></option>
+<option <?php if ($type_m=="Copier") { echo "selected"; } ?>>Copier</option>
+<option <?php if ($type_m=="Fax") { echo "selected"; } ?>>Fax</option>
+<option <?php if ($type_m=="Printer") { echo "selected"; } ?>>Printer</option>
+</select>
+</td></tr>
+
+<tr><td bgcolor="#D3E2EA" colspan="4" align="center"><b>Μοντέλο Μηχανήματος *</b></td>
+<td colspan="2">
+<select name="model_cartr" id="model_update_j" method="post" >
+<option></option>
+<?php
+
+$dbname = 'equipment';
+mysql_select_db($dbname);
+
+$query1="select id,model from equipment.lis_equipment where (type='Printer' OR type='Fax' OR type='Copier') ";
+echo $query1;
+$ret1=mysql_query($query1);
+$count1=mysql_num_rows($ret1);
+while ($count1>0) {
+$count1--;
+$row1=mysql_fetch_assoc($ret1);
+if ($row1['model']==$model_m) { echo "<option selected>".$row1['model']."</option>"; }
+else if ($row1['model']!=$model_m) { echo "<option>".$row1['model']."</option>"; }
+}
+?>
+</select>
+</td></tr>
+
+
+
+
+<?php
+//+++++++++++++++++++++++++++++++++++++++++++++++
+
+//PERIPTWSH A: iparxei i kataxwrisi sti vasi
+if ($count_query_show==1) {
+
+$row_query_show=mysql_fetch_array($return_query_show);
+
+?>
+
+<tr><td bgcolor=#D3E2EA><b><label for="black_toner">Τύπος Μαύρου Μελανιού *</label></b></td>
+<td><input type="text" name="black_toner_txt" id="black_update_j" value="<?php echo $row_query_show["black_toner"]; ?>"/></td>
+<td bgcolor=#D3E2EA><b><label for="black_toner_number">Αριθμός Μαύρων Μελανιών</label></b></td>
+<td><input type="text" name="black_toner_number_txt" value="<?php echo $row_query_show["black_quantity"]; ?>"/></td>
+<td bgcolor=#D3E2EA><b><label for="black_toner_price">Τιμή Μονάδος (Ευρώ)</label></b></td>
+<td><input type="text" name="black_toner_price_txt" value="<?php echo $row_query_show["black_price"]; ?>"/></td></tr>
+
+<tr><td bgcolor=#D3E2EA><b><label for="color_toner">Τύπος Έγχρωμου Μελανιού</label></b></td>
+<td><input type="text" name="color_toner_txt" id="color_j" value="<?php echo $row_query_show["color_toner"]; ?>"/></td>
+<td bgcolor=#D3E2EA><b><label for="color_toner_number">Αριθμός Έγχρωμων Μελανιών</label></b></td>
+<td><input type="text" name="color_toner_number_txt" value="<?php echo $row_query_show["color_quantity"]; ?>"/></td>
+<td bgcolor=#D3E2EA><b><label for="color_toner_price">Τιμή Μονάδος (Ευρώ)</label></b></td>
+<td><input type="text" name="color_toner_price_txt" value="<?php echo $row_query_show["color_price"]; ?>"/></td></tr>
+
+<tr><td bgcolor="cyan"><b><label for="cyan_toner">Τύπος 'Cyan' Μελανιού</label></b></td>
+<td><input type="text" name="cyan_toner_txt" id="cyan_j" value="<?php echo $row_query_show["cyan_toner"]; ?>"/></td>
+<td bgcolor="cyan"><b><label for="cyan_toner_number">Αριθμός 'Cyan' Μελανιών</label></b></td>
+<td><input type="text" name="cyan_toner_number_txt" value="<?php echo $row_query_show["cyan_quantity"]; ?>"/></td>
+<td bgcolor="cyan"><b><label for="cyan_toner_price">Τιμή Μονάδος (Ευρώ)</label></b></td>
+<td><input type="text" name="cyan_toner_price_txt" value="<?php echo $row_query_show["cyan_price"]; ?>"/></td></tr>
+
+<tr><td bgcolor="magenta"><b><label for="magenta_toner">Τύπος 'Magenta' Μελανιού</label></b></td>
+<td><input type="text" name="magenta_toner_txt" id="magenta_j" value="<?php echo $row_query_show["magenta_toner"]; ?>"/></td>
+<td bgcolor="magenta"><b><label for="magenta_toner_number">Αριθμός 'Magenta' Μελανιών</label></b></td>
+<td><input type="text" name="magenta_toner_number_txt" value="<?php echo $row_query_show["magenta_quantity"]; ?>"/></td>
+<td bgcolor="magenta"><b><label for="magenta_toner_price">Τιμή Μονάδος (Ευρώ)</label></b></td>
+<td><input type="text" name="magenta_toner_price_txt" value="<?php echo $row_query_show["magenta_price"]; ?>"/></td></tr>
+
+<tr><td bgcolor="yellow"><b><label for="yellow_toner">Τύπος 'Yellow' Μελανιού</label></b></td>
+<td><input type="text" name="yellow_toner_txt" id="yellow_j" value="<?php echo $row_query_show["yellow_toner"]; ?>"/></td>
+<td bgcolor="yellow"><b><label for="yellow_toner_number">Αριθμός 'Yellow' Μελανιών</label></b></td>
+<td><input type="text" name="yellow_toner_number_txt" value="<?php echo $row_query_show["yellow_quantity"]; ?>"/></td>
+<td bgcolor="yellow"><b><label for="yellow_toner_price">Τιμή Μονάδος (Ευρώ)</label></b></td>
+<td><input type="text" name="yellow_toner_price_txt" value="<?php echo $row_query_show["yellow_price"]; ?>"/></td></tr>
+
+<tr><td bgcolor="D3E2EA"><b><label for="comments">Σχόλια</label></b></td>
+<td colspan="5"><textarea name="comments_txt" rows="4" cols="100" wrap="soft" ><?php echo $row_query_show['comment']; ?></textarea></td></tr>
+
+</table>
+
+<br>
+<input type="submit" value="Ενημέρωση" name="update_show" />
+<input type="reset" value="Επαναφορά" />
+
+<input type="hidden" name="cartr_id_1" value="<?php echo $row_query_show['id']; ?>" />
+<input type="hidden" name="type_1" value="<?php echo $row_query_show['eq_type']; ?>" />
+<input type="hidden" name="model_cartr_1" value="<?php echo $row_query_show['model']; ?>" />
+
+<input type="hidden" value="<?php echo $_POST['black_toner_txt']; ?>" name="black_toner_txt_1"  />
+<input type="hidden" value="<?php echo $_POST['color_toner_txt']; ?>" name="color_toner_txt_1"  />
+<input type="hidden" value="<?php echo $_POST['cyan_toner_txt']; ?>" name="cyan_toner_txt_1"  />
+<input type="hidden" value="<?php echo $_POST['magenta_toner_txt']; ?>" name="magenta_toner_txt_1"  />
+<input type="hidden" value="<?php echo $_POST['yellow_toner_txt']; ?>" name="yellow_toner_txt_1"  />
+
+<input type="hidden" value="<?php echo $_POST['black_toner_number_txt']; ?>" name="black_number_1"  />
+<input type="hidden" value="<?php echo $_POST['color_toner_number_txt']; ?>" name="color_number_1"  />
+<input type="hidden" value="<?php echo $_POST['cyan_toner_number_txt']; ?>" name="cyan_number_1"  />
+<input type="hidden" value="<?php echo $_POST['magenta_toner_number_txt']; ?>" name="magenta_number_1"  />
+<input type="hidden" value="<?php echo $_POST['yellow_toner_number_txt']; ?>" name="yellow_number_1"  />
+
+<input type="hidden" value="<?php echo $_POST['black_toner_price_txt']; ?>" name="black_price_1"  />
+<input type="hidden" value="<?php echo $_POST['color_toner_price_txt']; ?>" name="color_price_1"  />
+<input type="hidden" value="<?php echo $_POST['cyan_toner_price_txt']; ?>" name="cyan_price_1"  />
+<input type="hidden" value="<?php echo $_POST['magenta_toner_price_txt']; ?>" name="magenta_price_1"  />
+<input type="hidden" value="<?php echo $_POST['yellow_toner_price_txt']; ?>" name="yellow_price_1"  />
+
+<input type="hidden" value="<?php echo $_POST['comments_txt']; ?>" name="comments_1"  />
+
+</form>
+
+<?php
+//+++++++++++++++++++++++++++++++++++++++++++++++++
+
+} //end if $count_query_show
+
+//PERIPTWSH B: DEN iparxei i kataxwrisi sti vasi
+else if ($count_query_show!=1) {
+?>
+
+</table>
+
+<?php
+
+echo "<br/>";
+echo "Κάντε κλικ <a href='http://150.140.152.10/mylis/modules.php?name=cartridges_toners&amp;op=cartridge_create&amp;view_create_type=$type_m&amp;view_create_model=$model_m'>εδώ</a> για να δημιουργήσετε κατηγορία αναλωσίμων για αυτό το συνδυασμό.";
+} //end else if
+
+} //end if (array_key_exists('cartridge_submit_show', $_POST) && !array_key_exists('update_show', $_POST) && !array_key_exists('confirm_final',$_POST))
+
+
+
+
+
+//DEYTERO TREXIMO TOY ARXEIOY
+//if (!array_key_exists('cartridge_submit_show', $_POST) && array_key_exists('update_show', $_POST) && !array_key_exists('confirm_final',$_POST)) { 
+if (array_key_exists('update_show', $_POST)) {
+
+//periptwsi kata tin opoia 8elw na epilexw proboli meta apo dimiourgia
+//apostoli mesw link twn epilogwn sto paron arxeio gia dimiourgia
+$view_create_type = $_GET['view_create_type'];
+$view_create_model = $_GET['view_create_model'];
+
+
+
+
+//pinakasssssssssssssssssssssssssssssssssssssssssssssssssssssssssss
+
+?>
+
+<table cols="6" border="2" cellspacing="1" cellpadding="5">
+
+<tr><td bgcolor=#D3E2EA colspan="6" align="center"><b>Κατηγορία Αναλωσίμου</b></td></tr>
+
+<tr><td bgcolor="#D3E2EA" colspan="4" align="center"><b>Είδος Μονάδας *</b></td>
+<td colspan="2">
+<select name="type_cartr" method="post" >
+<option></option>
+<option <?php if ($_POST['type_1']=="Copier") { echo "selected"; } ?>>Copier</option>
+<option <?php if ($_POST['type_1']=="Fax") { echo "selected"; } ?>>Fax</option>
+<option <?php if ($_POST['type_1']=="Printer") { echo "selected"; } ?>>Printer</option>
+</select>
+</td></tr>
+
+<tr><td bgcolor="#D3E2EA" colspan="4" align="center"><b>Μοντέλο Μηχανήματος *</b></td>
+<td colspan="2">
+<select name="model_cartr" method="post" >
+<option></option>
+<?php
+
+$dbname = 'equipment';
+mysql_select_db($dbname);
+
+$query1="select id,model from equipment.lis_equipment where (type='Printer' OR type='Fax' OR type='Copier') ";
+echo $query1;
+$ret1=mysql_query($query1);
+$count1=mysql_num_rows($ret1);
+while ($count1>0) {
+$count1--;
+$row1=mysql_fetch_assoc($ret1);
+if ($row1['model']==$_POST['model_cartr_1']) { echo "<option selected>".$row1['model']."</option>"; }
+else if ($row1['model']!=$_POST['model_cartr_1']) { echo "<option>".$row1['model']."</option>"; }
+}
+?>
+</select>
+</td></tr>
+
+<tr><td bgcolor=#D3E2EA><b><label for="black_toner">Τύπος Μαύρου Μελανιού *</label></b></td>
+<td><input type="text" name="black_toner_txt" value="<?php echo $_POST['black_toner_txt']; ?>"/></td>
+<td bgcolor=#D3E2EA><b><label for="black_toner_number">Αριθμός Μαύρων Μελανιών</label></b></td>
+<td><input type="text" name="black_toner_number_txt" value="<?php echo $_POST['black_toner_number_txt']; ?>"/></td>
+<td bgcolor=#D3E2EA><b><label for="black_toner_price">Τιμή Μονάδος (Ευρώ)</label></b></td>
+<td><input type="text" name="black_toner_price_txt" value="<?php echo $_POST['black_toner_price_txt']; ?>"/></td></tr>
+
+<tr><td bgcolor=#D3E2EA><b><label for="color_toner">Τύπος Έγχρωμου Μελανιού</label></b></td>
+<td><input type="text" name="color_toner_txt" id="color_j" value="<?php echo $_POST['color_toner_txt']; ?>"/></td>
+<td bgcolor=#D3E2EA><b><label for="color_toner_number">Αριθμός Έγχρωμων Μελανιών</label></b></td>
+<td><input type="text" name="color_toner_number_txt" value="<?php echo $_POST['color_toner_number_txt']; ?>"/></td>
+<td bgcolor=#D3E2EA><b><label for="color_toner_price">Τιμή Μονάδος (Ευρώ)</label></b></td>
+<td><input type="text" name="color_toner_price_txt" value="<?php echo $_POST['color_toner_price_txt']; ?>"/></td></tr>
+
+<tr><td bgcolor="cyan"><b><label for="cyan_toner">Τύπος 'Cyan' Μελανιού</label></b></td>
+<td><input type="text" name="cyan_toner_txt" id="cyan_j" value="<?php echo $_POST['cyan_toner_txt']; ?>"/></td>
+<td bgcolor="cyan"><b><label for="cyan_toner_number">Αριθμός 'Cyan' Μελανιών</label></b></td>
+<td><input type="text" name="cyan_toner_number_txt" value="<?php echo $_POST['cyan_toner_number_txt']; ?>"/></td>
+<td bgcolor="cyan"><b><label for="cyan_toner_price">Τιμή Μονάδος (Ευρώ)</label></b></td>
+<td><input type="text" name="cyan_toner_price_txt" value="<?php echo $_POST['cyan_toner_price_txt']; ?>"/></td></tr>
+
+<tr><td bgcolor="magenta"><b><label for="magenta_toner">Τύπος 'Magenta' Μελανιού</label></b></td>
+<td><input type="text" name="magenta_toner_txt" id="magenta_j" value="<?php echo $_POST['magenta_toner_txt']; ?>"/></td>
+<td bgcolor="magenta"><b><label for="magenta_toner_number">Αριθμός 'Magenta' Μελανιών</label></b></td>
+<td><input type="text" name="magenta_toner_number_txt" value="<?php echo $_POST['magenta_toner_number_txt']; ?>"/></td>
+<td bgcolor="magenta"><b><label for="magenta_toner_price">Τιμή Μονάδος (Ευρώ)</label></b></td>
+<td><input type="text" name="magenta_toner_price_txt" value="<?php echo $_POST['magenta_toner_price_txt']; ?>"/></td></tr>
+
+<tr><td bgcolor="yellow"><b><label for="yellow_toner">Τύπος 'Yellow' Μελανιού</label></b></td>
+<td><input type="text" name="yellow_toner_txt" id="yellow_j" value="<?php echo $_POST['yellow_toner_txt']; ?>"/></td>
+<td bgcolor="yellow"><b><label for="yellow_toner_number">Αριθμός 'Yellow' Μελανιών</label></b></td>
+<td><input type="text" name="yellow_toner_number_txt" value="<?php echo $_POST['yellow_toner_number_txt']; ?>"/></td>
+<td bgcolor="yellow"><b><label for="yellow_toner_price">Τιμή Μονάδος (Ευρώ)</label></b></td>
+<td><input type="text" name="yellow_toner_price_txt" value="<?php echo $_POST['yellow_toner_price_txt']; ?>"/></td></tr>
+
+<tr><td bgcolor="D3E2EA"><b><label for="comments">Σχόλια</label></b></td>
+<td colspan="5"><textarea name="comments_txt" rows="4" cols="100" wrap="soft" ><?php echo $_POST["comments_txt"]; ?></textarea></td></tr>
+
+</table>
+
+
+<?php
+
+//pinakasssssssssssssssssssssssssssssssssssssssssssssssssssssssssss
+
+
+
+
+
+
+
+echo "<br/>Εάν επιθυμείτε να αποθηκεύσετε στη βάση τα άνω δεδομένα, επιλέξτε 'Επιβεβαίωση'. <br/><br/>Διαφορετικά, επιλέξτε 'Επιστροφή' για να επιστρέψετε στην προηγούμενη σελίδα.<br/><br/>";
+?>
+
+
+
+<form style="display:inline" name="form_final_confirm" action="modules.php?name=cartridges_toners&amp;op=cartridge_show" method="post" enctype="multipart/form-data">
+<input type="submit" value="Επιβεβαίωση" name="confirm_final" />
+<input type="reset" value="Επιστροφή" onclick="javascript:history.go(-1);" />
+
+<input type="hidden" name="cartr_id" value="<?php echo $_POST['cartr_id_1']; ?>" />
+<input type="hidden" name="kind" value="<?php echo $_POST['type_1']; ?>" />
+<input type="hidden" name="model" value="<?php echo $_POST['model_cartr_1']; ?>" />
+
+<input type="hidden" value="<?php echo $_POST['black_toner_txt']; ?>" name="black_toner_txt"  />
+<input type="hidden" value="<?php echo $_POST['color_toner_txt']; ?>" name="color_toner_txt"  />
+<input type="hidden" value="<?php echo $_POST['cyan_toner_txt']; ?>" name="cyan_toner_txt"  />
+<input type="hidden" value="<?php echo $_POST['magenta_toner_txt']; ?>" name="magenta_toner_txt"  />
+<input type="hidden" value="<?php echo $_POST['yellow_toner_txt']; ?>" name="yellow_toner_txt"  />
+
+<input type="hidden" value="<?php echo $_POST['black_toner_number_txt']; ?>" name="black_number"  />
+<input type="hidden" value="<?php echo $_POST['color_toner_number_txt']; ?>" name="color_number"  />
+<input type="hidden" value="<?php echo $_POST['cyan_toner_number_txt']; ?>" name="cyan_number"  />
+<input type="hidden" value="<?php echo $_POST['magenta_toner_number_txt']; ?>" name="magenta_number"  />
+<input type="hidden" value="<?php echo $_POST['yellow_toner_number_txt']; ?>" name="yellow_number"  />
+
+<input type="hidden" value="<?php echo $_POST['black_toner_price_txt']; ?>" name="black_price"  />
+<input type="hidden" value="<?php echo $_POST['color_toner_price_txt']; ?>" name="color_price"  />
+<input type="hidden" value="<?php echo $_POST['cyan_toner_price_txt']; ?>" name="cyan_price"  />
+<input type="hidden" value="<?php echo $_POST['magenta_toner_price_txt']; ?>" name="magenta_price"  />
+<input type="hidden" value="<?php echo $_POST['yellow_toner_price_txt']; ?>" name="yellow_price"  />
+
+<input type="hidden" value="<?php echo $_POST['comments_txt']; ?>" name="comments"  />
+
+</form>
+
+<?php
+} //end if (!array_key_exists('cartridge_submit_show', $_POST) && array_key_exists('update_show', $_POST) && !array_key_exists('confirm_final',$_POST))
+
+
+//TRITO TREXIMO TOY ARXEIOY
+//ENHMERWSH THS FORMAS
+if (!array_key_exists('cartridge_submit_show', $_POST) && !array_key_exists('update_show', $_POST) && array_key_exists('confirm_final',$_POST)) { 
+//if (array_key_exists('confirm_final',$_POST)) {
+// teliko insertion sti basi
+
+$current_3=getdate();
+$day_3=$current_3['mday'];
+$month_3=$current_3['mon'];
+$year_3=$current_3['year'];
+$current_date_3=$year_3.'-'.$month_3.'-'.$day_3;
+
+
+$query_update_2="update equipment.cartridge_toner set eq_type='".$_POST['kind']."', model='".$_POST['model']."', black_toner='".$_POST['black_toner_txt'].
+"', color_toner='".$_POST['color_toner_txt']."', cyan_toner='".$_POST['cyan_toner_txt']."', magenta_toner='".$_POST['magenta_toner_txt']."', yellow_toner='".$_POST['yellow_toner_txt'].
+"', black_quantity='".$_POST['black_number']."', color_quantity='".$_POST['color_number']."', cyan_quantity='".$_POST['cyan_number']."', magenta_quantity='".$_POST['magenta_number']."', yellow_quantity='".$_POST['yellow_number'].
+"', black_price='".$_POST['black_price']."', color_price='".$_POST['color_price']."', cyan_price='".$_POST['cyan_price']."', magenta_price='".$_POST['magenta_price']."', yellow_price='".$_POST['yellow_price'].
+"', comment='".$_POST['comments']."', date_check='$current_date_3' where id='".$_POST['cartr_id']."'";
+$return_update_2=mysql_query($query_update_2);
+
+
+
+
+
+echo "Η ενημέρωση της επιλεγμένης καταχώρησης έλαβε χώρα επιτυχώς!!<br/><br/>";
+echo "Κάντε κλικ <a href='http://150.140.152.10/mylis/modules.php?name=cartridges_toners&amp;op=cartridge_show&amp;view_create_type=".$_POST['kind']."&amp;view_create_model=".$_POST['model']."'>εδώ</a> για να μεταβείτε στην προβολή των κατηγοριών των αναλωσίμων.";
+
+} //end if  !!+  ENHMERWSH FORMAS
+
+
+
+} // END OF FUNCTION 2
+?>
+
+
+
+
+
+
+
+<?php
+
+/////////////////////////////////////
+//					//
+//		SYNARTHSH 3 		// provoli menu
+//					//
+/////////////////////////////////////
+
+function cartridge_test_menu($db2,$db_select,$module_name,$sectname,$usersection,$managesection,$user_id)
+{
+
+
+
+
+
+opentable();
+
+echo "<table border=0 align='center'><tr>";
+echo "<tr><td align=center valign=top> <button style=\"width=200; height=50;\" "
+    ."onClick=\"javascript:window.location='modules.php?name=$module_name&amp;op=cartridge_test_printers';\" >"
+    ."<table border=0 width=200 height=45><tr><td align=center valign=middle>Έλεγχος Αναλωσίμων <br/>Εκτυπωτών</td></tr></button></table></td></tr>";
+echo "<tr><td align=center valign=top> <button style=\"width=200; height=50;\" "
+    ."onClick=\"javascript:window.location='modules.php?name=$module_name&amp;op=cartridge_test_faxes';\" >"
+    ."<table border=0 width=200 height=45><tr><td align=center valign=middle>Έλεγχος Αναλωσίμων <br/>Τηλεομοιοτυπικών</td></tr></button></table></td></tr>";
+echo "<tr><td align=center valign=top> <button style=\"width=200; height=50;\" "
+    ."onClick=\"javascript:window.location='modules.php?name=$module_name&amp;op=cartridge_test_copiers';\" >"
+    ."<table border=0 width=200 height=45><tr><td align=center valign=middle>Έλεγχος Αναλωσίμων <br/>Φωτοαντιγραφικών</td></tr></button></table></td></tr>";
+echo "<tr><td align=center valign=top> <button style=\"width=200; height=50;\" "
+    ."onClick=\"javascript:window.location='modules.php?name=$module_name&amp;op=cartridge_test_all';\" >"
+    ."<table border=0 width=200 height=45><tr><td align=center valign=middle><b>Συνολικός Έλεγχος Αναλωσίμων</b></td></tr></button></table></td></tr>";
+echo "</tr></table>";
+
+
+closetable();
+
+
+} // END OF SYNARTHSH 3
+?>
+
+
+
+
+<?php
+
+/////////////////////////////////////
+//					//
+//		SYNARTHSH 4 		// printers status menu 
+//					//
+/////////////////////////////////////
+
+function cartridge_test_printers($db2,$db_select,$module_name,$sectname,$usersection,$managesection,$user_id)
+{
+
+if (!array_key_exists('status_submit', $_POST)) {  
+
+$query_printers="select * from equipment.cartridge_toner where eq_type='Printer'";
+$return_printers=mysql_query($query_printers);
+$count_printers_show=mysql_num_rows($return_printers);
+
+
+
+// PERIPTWSH OPOY DEN YPARXEI KAMIA KATAXWRHSH GIA EKTYPWTES
+if ($count_printers_show=='') 
+{ 
+echo "Δεν υπάρχει στη βάση καμία καταχώρηση για εκτυπωτές!<br/><br/>"; 
+echo "Παρακαλώ πατήστε <a href='http://150.140.152.10/mylis/modules.php?name=cartridges_toners&amp;op=cartridge_create&amp;view_create_type=Printer'>εδώ</a> για να δημιουργήσετε καταχώρηση για καινούριο εκτυπωτή.";
+} //end if ($count_printers_show=='')
+
+
+
+
+// PERIPTWSH OPOY YPARXEI TOYLAXISTON MIA KATAXWRHSH GIA EKTYPWTES
+else if ($count_printers_show!='') 
+{
+
+echo "<form style='display:inline' name='status' action='modules.php?name=cartridges_toners&amp;op=cartridge_test_printers' method='post' enctype='multipart/form-data' >";
+
+echo "<table cols='10' border='2' cellspacing='1' cellpadding='5'>";
+
+echo "<tr><td bgcolor=#D3E2EA align='center' colspan='10'><b>ΕΚΤΥΠΩΤΕΣ</b></td></tr>".
+"<td bgcolor=#D3E2EA align='center'><b>ΑΑ</b></td><td bgcolor=#D3E2EA align='center'><b>Μοντέλο</b></td><td bgcolor=#D3E2EA align='center'><b>Μαύρο Μελάνι</b></td>".
+"<td bgcolor=#D3E2EA align='center'><b>Έγχρωμο Μελάνι</b></td><td bgcolor='cyan' align='center'><b>Cyan</b></td><td bgcolor='magenta' align='center'><b>Magenta</b></td>".
+"<td bgcolor='yellow' align='center'><b>Yellow</b></td><td bgcolor=#D3E2EA align='center'><b>Σχόλια</b></td>".
+"<td bgcolor=#D3E2EA align='center'><b> Τελευταία Ημερομηνία Τροποποίησης</b></td><td bgcolor=#D3E2EA align='center'><b>Επεξεργασία <br/>(για Παραγγελία)</b></td></tr>";
+
+$temp_counter=0;
+while ($count_printers_show>0) {
+$temp_counter++;
+$count_printers_show--;
+$row_printers=mysql_fetch_assoc($return_printers);
+
+
+
+//Elegxoi gia na xrwmatisw ta koytakia!!
+
+if ($row_printers['black_quantity']>=2) { $black_temp="bgcolor='green'"; }
+if ($row_printers['black_quantity']==1) { $black_temp="bgcolor='orange'"; }		//black
+if ($row_printers['black_quantity']<1) { $black_temp="bgcolor='red'"; }
+
+if ($row_printers['color_quantity']>=2) { $color_temp="bgcolor='green'"; }
+if ($row_printers['color_quantity']==1) { $color_temp="bgcolor='orange'"; }		//color
+if ($row_printers['color_quantity']<1) { $color_temp="bgcolor='red'"; }
+
+if ($row_printers['cyan_quantity']>=2) { $cyan_temp="bgcolor='green'"; }
+if ($row_printers['cyan_quantity']==1) { $cyan_temp="bgcolor='orange'"; }		//cyan
+if ($row_printers['cyan_quantity']<1) { $cyan_temp="bgcolor='red'"; }
+
+if ($row_printers['magenta_quantity']>=2) { $magenta_temp="bgcolor='green'"; }
+if ($row_printers['magenta_quantity']==1) { $magenta_temp="bgcolor='orange'"; }		//magenta
+if ($row_printers['magenta_quantity']<1) { $magenta_temp="bgcolor='red'"; }
+
+if ($row_printers['yellow_quantity']>=2) { $yellow_temp="bgcolor='green'"; }
+if ($row_printers['yellow_quantity']==1) { $yellow_temp="bgcolor='orange'"; }		//yellow
+if ($row_printers['yellow_quantity']<1) { $yellow_temp="bgcolor='red'"; }
+
+
+
+//Gia ka8e tipo melaniou, 8a valw 2 periptwseis, opou 8a elegxw ean exw perasei sti vasi tipo melaniou gia kapoion ektipwti
+
+echo "<tr><td align='center'>$temp_counter</td><td align='center'>".$row_printers['model']."</td><td align='center'>".
+"<table cols='2' rows='3' border='1'><tr><td bgcolor=#D3E2EA>Τύπος</td><td align='center'>".$row_printers['black_toner']."</td></tr>".
+"<tr><td bgcolor=#D3E2EA>Διαθέσιμα Μελάνια</td><td $black_temp align='center'>".$row_printers['black_quantity']."</td></tr>".
+"<tr><td bgcolor=#D3E2EA>Τιμή / #</td><td align='center'>".$row_printers['black_price']."</td></tr></table></td>";
+
+// exetasi iparxis i mi color toner
+if ($row_printers['color_toner']=='-' || $row_printers['color_toner']=='') { echo "<td align='center'>&nbsp</td>"; }
+else 
+{
+echo "<td align='center'><table cols='2' rows='3' border='1'><tr><td bgcolor=#D3E2EA>Τύπος</td><td align='center'>".$row_printers['color_toner']."</td></tr>".
+"<tr><td bgcolor=#D3E2EA>Διαθέσιμα Μελάνια</td><td $color_temp align='center'>".$row_printers['color_quantity']."</td></tr>".
+"<tr><td bgcolor=#D3E2EA>Τιμή / #</td><td align='center'>".$row_printers['color_price']."</td></tr></table></td>";
+}
+
+
+// exetasi iparxis i mi cyan toner
+if ($row_printers['cyan_toner']=='-' || $row_printers['cyan_toner']=='') { echo "<td align='center'>&nbsp</td>"; }
+else 
+{
+echo "<td align='center'><table cols='2' rows='3' border='1'><tr><td bgcolor=#D3E2EA>Τύπος</td><td align='center'>".$row_printers['cyan_toner']."</td></tr>".
+"<tr><td bgcolor=#D3E2EA>Διαθέσιμα Μελάνια</td><td $cyan_temp align='center'>".$row_printers['cyan_quantity']."</td></tr>".
+"<tr><td bgcolor=#D3E2EA>Τιμή / #</td><td align='center'>".$row_printers['cyan_price']."</td></tr></table></td>";
+}
+
+// exetasi iparxis i mi magenta toner
+if ($row_printers['magenta_toner']=='-' || $row_printers['magenta_toner']=='') { echo "<td align='center'>&nbsp</td>"; }
+else 
+{
+echo "<td align='center'><table cols='2' rows='3' border='1'><tr><td bgcolor=#D3E2EA>Τύπος</td><td align='center'>".$row_printers['magenta_toner']."</td></tr>".
+"<tr><td bgcolor=#D3E2EA>Διαθέσιμα Μελάνια</td><td $magenta_temp align='center'>".$row_printers['magenta_quantity']."</td></tr>".
+"<tr><td bgcolor=#D3E2EA>Τιμή / #</td><td align='center'>".$row_printers['magenta_price']."</td></tr></table></td>";
+}
+
+// exetasi iparxis i mi yellow toner
+if ($row_printers['yellow_toner']=='-' || $row_printers['yellow_toner']=='') { echo "<td align='center'>&nbsp</td>"; }
+else 
+{
+echo "<td align='center'><table cols='2' rows='3' border='1'><tr><td bgcolor=#D3E2EA>Τύπος</td><td align='center'>".$row_printers['yellow_toner']."</td></tr>".
+"<tr><td bgcolor=#D3E2EA>Διαθέσιμα Μελάνια</td><td $yellow_temp align='center'>".$row_printers['yellow_quantity']."</td></tr>".
+"<tr><td bgcolor=#D3E2EA>Τιμή / #</td><td align='center'>".$row_printers['yellow_price']."</td></tr></table></td>";
+}
+
+echo "<td>".$row_printers['comment']."</td>".
+
+"<td align='center'>".$row_printers['date_check']."</td>".
+
+"<td align='center'><input type='checkbox' name='status_checkbox[]' value='".$row_printers['id']."' /></td>".
+
+"</tr>";
+
+} //end while ($count_printers_show>0)
+
+echo "</table>";
+
+echo "<br/><input type='submit' value='Επεξεργασία' name='status_submit' />".
+"<input type='reset' value='Επαναφορά' name='status_reset' />";
+
+echo "</form>";
+
+
+} //end else
+
+} // end if (!array_key_exists('status_submit', $_POST)) {  
+
+
+
+if (array_key_exists('status_submit', $_POST) && !isset($_POST['status_checkbox'])) {  
+
+echo "Παρακαλώ επιλέξτε πρώτα κάποιο μηχάνημα για επεξεργασία!<br/><br/>";
+echo "<form style='display:inline' name='test' action='modules.php?name=cartridges_toners&amp;op=cartridge_test_printers' method='post' enctype='multipart/form-data' >".
+"Για να επιστρέψετε στο μενού με τα μηχανήματα, επιλέξτε 'Επιστροφή'. <br/><br/>".
+"<input type='reset' value='Επιστροφή' onclick='javascript:history.go(-1);' /></form>";
+
+} // end if (array_key_exists('status_submit', $_POST) && !isset($_POST['status_checkbox'])) 
+
+
+
+
+if (array_key_exists('status_submit', $_POST) && isset($_POST['status_checkbox'])) {  
+
+echo "<form style='display:inline' name='pass_hidden_id' id='form_j_submit' action='modules.php?name=cartridges_toners&amp;op=cartridge_order_printers' method='post' enctype='multipart/form-data' >";
+
+$temp_counter_2=0;
+foreach ($_POST['status_checkbox'] as $status_checkbox) {
+
+$test_var[$temp_counter_2]=$status_checkbox;
+
+$temp_counter_2++;
+echo "<input type='hidden' value='$status_checkbox' name='checkbox[]'  />";
+//periexei ton pinaka me ta id pou 8eloume na epexergastoume
+
+} //end foreach
+
+
+$test_var_size=sizeof($test_var);
+
+echo "<input type='hidden' value='$test_var_size' name='pinax_size'  />";
+
+
+echo "</form>";
+
+echo "<script>document.getElementById('form_j_submit').submit()</script>";
+
+} // end if (array_key_exists('status_submit', $_POST) && isset($_POST['status_checkbox'])) 
+
+
+
+
+
+} // END OF SYNARTHSH 4
+?>
+
+
+
+
+
+<?php
+
+/////////////////////////////////////
+//					//
+//		SYNARTHSH 5 		// faxes status menu 
+//					//
+/////////////////////////////////////
+
+function cartridge_test_faxes($db2,$db_select,$module_name,$sectname,$usersection,$managesection,$user_id)
+{
+
+if (!array_key_exists('status_submit_faxes', $_POST)) {  
+
+$query_faxes="select * from equipment.cartridge_toner where eq_type='Fax'";
+$return_faxes=mysql_query($query_faxes);
+$count_faxes_show=mysql_num_rows($return_faxes);
+
+
+
+// PERIPTWSH OPOY DEN YPARXEI KAMIA KATAXWRHSH GIA FAXES
+if ($count_faxes_show=='') 
+{ 
+echo "Δεν υπάρχει στη βάση καμία καταχώρηση για τηλε-ομοιοτυπικά!<br/><br/>"; 
+echo "Παρακαλώ πατήστε <a href='http://150.140.152.10/mylis/modules.php?name=cartridges_toners&amp;op=cartridge_create&amp;view_create_type=Fax'>εδώ</a> για να δημιουργήσετε καταχώρηση για καινούριο τηλε-ομοιοτυπικό.";
+} //end if ($count_faxes_show=='')
+
+
+
+
+// PERIPTWSH OPOY YPARXEI TOYLAXISTON MIA KATAXWRHSH GIA FAXES
+else if ($count_faxes_show!='') 
+{
+
+echo "<form style='display:inline' name='status_faxes' action='modules.php?name=cartridges_toners&amp;op=cartridge_test_faxes' method='post' enctype='multipart/form-data' >";
+
+echo "<table cols='10' border='2' cellspacing='1' cellpadding='5'>";
+
+echo "<tr><td bgcolor=#D3E2EA align='center' colspan='10'><b>ΤΗΛΕ-ΟΜΟΙΟΤΥΠΙΚΑ</b></td></tr>".
+"<td bgcolor=#D3E2EA align='center'><b>ΑΑ</b></td><td bgcolor=#D3E2EA align='center'><b>Μοντέλο</b></td><td bgcolor=#D3E2EA align='center'><b>Μαύρο Μελάνι</b></td>".
+"<td bgcolor=#D3E2EA align='center'><b>Σχόλια</b></td>".
+"<td bgcolor=#D3E2EA align='center'><b> Τελευταία Ημερομηνία Τροποποίησης</b></td><td bgcolor=#D3E2EA align='center'><b>Επεξεργασία <br/>(για Παραγγελία)</b></td></tr>";
+
+$temp_counter_faxes=0;
+while ($count_faxes_show>0) {
+$temp_counter_faxes++;
+$count_faxes_show--;
+$row_faxes=mysql_fetch_assoc($return_faxes);
+
+
+
+//Elegxoi gia na xrwmatisw ta koytakia!!
+
+if ($row_faxes['black_quantity']>=2) { $black_temp="bgcolor='green'"; }
+if ($row_faxes['black_quantity']==1) { $black_temp="bgcolor='orange'"; }		//black
+if ($row_faxes['black_quantity']<1) { $black_temp="bgcolor='red'"; }
+
+
+echo "<tr><td align='center'>$temp_counter_faxes</td><td align='center'>".$row_faxes['model']."</td><td align='center'>".
+"<table cols='2' rows='3' border='1'><tr><td bgcolor=#D3E2EA>Τύπος</td><td align='center'>".$row_faxes['black_toner']."</td></tr>".
+"<tr><td bgcolor=#D3E2EA>Διαθέσιμα Μελάνια</td><td $black_temp align='center'>".$row_faxes['black_quantity']."</td></tr>".
+"<tr><td bgcolor=#D3E2EA>Τιμή / #</td><td align='center'>".$row_faxes['black_price']."</td></tr></table></td>";
+
+
+echo "<td>".$row_faxes['comment']."</td>".
+
+"<td align='center'>".$row_faxes['date_check']."</td>".
+
+"<td align='center'><input type='checkbox' name='status_checkbox_fax[]' value='".$row_faxes['id']."' /></td>".
+
+"</tr>";
+
+} //end while ($count_faxes_show>0)
+
+echo "</table>";
+
+echo "<br/><input type='submit' value='Επεξεργασία' name='status_submit_faxes' />".
+"<input type='reset' value='Επαναφορά' name='status_reset_faxes' />";
+
+echo "</form>";
+
+
+} //end else
+
+} // end if (!array_key_exists('status_submit_faxes', $_POST)) {  
+
+
+
+if (array_key_exists('status_submit_faxes', $_POST) && !isset($_POST['status_checkbox_fax'])) {  
+
+echo "Παρακαλώ επιλέξτε πρώτα κάποιο μηχάνημα για επεξεργασία!<br/><br/>";
+echo "<form style='display:inline' name='test' action='modules.php?name=cartridges_toners&amp;op=cartridge_test_faxes' method='post' enctype='multipart/form-data' >".
+"Για να επιστρέψετε στο μενού με τα μηχανήματα, επιλέξτε 'Επιστροφή'. <br/><br/>".
+"<input type='reset' value='Επιστροφή' onclick='javascript:history.go(-1);' /></form>";
+
+} // end if (array_key_exists('status_submit_faxes', $_POST) && !isset($_POST['status_checkbox_fax'])) 
+
+
+
+
+if (array_key_exists('status_submit_faxes', $_POST) && isset($_POST['status_checkbox_fax'])) {  
+
+echo "<form style='display:inline' name='pass_hidden_id' id='form_j_submit_faxes' action='modules.php?name=cartridges_toners&amp;op=cartridge_order_faxes' method='post' enctype='multipart/form-data' >";
+
+$temp_counter_faxes_2=0;
+foreach ($_POST['status_checkbox_fax'] as $status_checkbox_fax) {
+
+$test_var[$temp_counter_faxes_2]=$status_checkbox_fax;
+
+$temp_counter_faxes_2++;
+echo "<input type='hidden' value='$status_checkbox_fax' name='checkbox_fax[]'  />";
+//periexei ton pinaka me ta id pou 8eloume na epexergastoume
+
+} //end foreach
+
+
+$test_var_size=sizeof($test_var);
+
+echo "<input type='hidden' value='$test_var_size' name='pinax_size_fax'  />";
+
+
+echo "</form>";
+
+echo "<script>document.getElementById('form_j_submit_faxes').submit()</script>";
+
+} // end if (array_key_exists('status_submit_faxes', $_POST) && isset($_POST['status_checkbox_fax'])) 
+
+
+
+} // END OF SYNARTHSH 5
+?>
+
+
+
+
+
+
+
+<?php
+
+/////////////////////////////////////
+//					//
+//		SYNARTHSH 6 		// copiers status menu 
+//					//
+/////////////////////////////////////
+
+function cartridge_test_copiers($db2,$db_select,$module_name,$sectname,$usersection,$managesection,$user_id)
+{
+
+if (!array_key_exists('status_submit_copiers', $_POST)) {  
+
+$query_copiers="select * from equipment.cartridge_toner where eq_type='Copier'";
+$return_copiers=mysql_query($query_copiers);
+$count_copiers_show=mysql_num_rows($return_copiers);
+
+
+
+// PERIPTWSH OPOY DEN YPARXEI KAMIA KATAXWRHSH GIA COPIERS
+if ($count_copiers_show=='') 
+{ 
+echo "Δεν υπάρχει στη βάση καμία καταχώρηση για φωτοαντιγραφικά!<br/><br/>"; 
+echo "Παρακαλώ πατήστε <a href='http://150.140.152.10/mylis/modules.php?name=cartridges_toners&amp;op=cartridge_create&amp;view_create_type=Copier'>εδώ</a> για να δημιουργήσετε καταχώρηση για καινούριο φωτοαντιγραφικό.";
+} //end if ($count_copiers_show=='')
+
+
+
+
+// PERIPTWSH OPOY YPARXEI TOYLAXISTON MIA KATAXWRHSH GIA COPIERS
+else if ($count_copiers_show!='') 
+{
+
+echo "<form style='display:inline' name='status_copiers' action='modules.php?name=cartridges_toners&amp;op=cartridge_test_copiers' method='post' enctype='multipart/form-data' >";
+
+echo "<table cols='10' border='2' cellspacing='1' cellpadding='5'>";
+
+echo "<tr><td bgcolor=#D3E2EA align='center' colspan='10'><b>ΦΩΤΟΑΝΤΙΓΡΑΦΙΚΑ</b></td></tr>".
+"<td bgcolor=#D3E2EA align='center'><b>ΑΑ</b></td><td bgcolor=#D3E2EA align='center'><b>Μοντέλο</b></td><td bgcolor=#D3E2EA align='center'><b>Μαύρο Μελάνι</b></td>".
+"<td bgcolor=#D3E2EA align='center'><b>Σχόλια</b></td>".
+"<td bgcolor=#D3E2EA align='center'><b> Τελευταία Ημερομηνία Τροποποίησης</b></td><td bgcolor=#D3E2EA align='center'><b>Επεξεργασία <br/>(για Παραγγελία)</b></td></tr>";
+
+$temp_counter_copiers=0;
+while ($count_copiers_show>0) {
+$temp_counter_copiers++;
+$count_copiers_show--;
+$row_copiers=mysql_fetch_assoc($return_copiers);
+
+
+
+//Elegxoi gia na xrwmatisw ta koytakia!!
+
+if ($row_copiers['black_quantity']>=2) { $black_temp="bgcolor='green'"; }
+if ($row_copiers['black_quantity']==1) { $black_temp="bgcolor='orange'"; }		//black
+if ($row_copiers['black_quantity']<1) { $black_temp="bgcolor='red'"; }
+
+
+echo "<tr><td align='center'>$temp_counter_copiers</td><td align='center'>".$row_copiers['model']."</td><td align='center'>".
+"<table cols='2' rows='3' border='1'><tr><td bgcolor=#D3E2EA>Τύπος</td><td align='center'>".$row_copiers['black_toner']."</td></tr>".
+"<tr><td bgcolor=#D3E2EA>Διαθέσιμα Μελάνια</td><td $black_temp align='center'>".$row_copiers['black_quantity']."</td></tr>".
+"<tr><td bgcolor=#D3E2EA>Τιμή / #</td><td align='center'>".$row_copiers['black_price']."</td></tr></table></td>";
+
+
+echo "<td>".$row_copiers['comment']."</td>".
+
+"<td align='center'>".$row_copiers['date_check']."</td>".
+
+"<td align='center'><input type='checkbox' name='status_checkbox_copier[]' value='".$row_copiers['id']."' /></td>".
+
+"</tr>";
+
+} //end while ($count_copiers_show>0)
+
+echo "</table>";
+
+echo "<br/><input type='submit' value='Επεξεργασία' name='status_submit_copiers' />".
+"<input type='reset' value='Επαναφορά' name='status_reset_copiers' />";
+
+echo "</form>";
+
+
+} //end else
+
+} // end if (!array_key_exists('status_submit_copiers', $_POST)) {  
+
+
+if (array_key_exists('status_submit_copiers', $_POST) && !isset($_POST['status_checkbox_copier'])) {  
+
+echo "Παρακαλώ επιλέξτε πρώτα κάποιο μηχάνημα για επεξεργασία!<br/><br/>";
+echo "<form style='display:inline' name='test' action='modules.php?name=cartridges_toners&amp;op=cartridge_test_copiers' method='post' enctype='multipart/form-data' >".
+"Για να επιστρέψετε στο μενού με τα μηχανήματα, επιλέξτε 'Επιστροφή'. <br/><br/>".
+"<input type='reset' value='Επιστροφή' onclick='javascript:history.go(-1);' /></form>";
+
+} // end if (array_key_exists('status_submit_copiers', $_POST) && !isset($_POST['status_checkbox_copier'])) 
+
+
+
+
+if (array_key_exists('status_submit_copiers', $_POST) && isset($_POST['status_checkbox_copier'])) {  
+
+echo "<form style='display:inline' name='pass_hidden_id' id='form_j_submit_copiers' action='modules.php?name=cartridges_toners&amp;op=cartridge_order_copiers' method='post' enctype='multipart/form-data' >";
+
+$temp_counter_copiers_2=0;
+foreach ($_POST['status_checkbox_copier'] as $status_checkbox_copier) {
+
+$test_var[$temp_counter_copiers_2]=$status_checkbox_copier;
+
+$temp_counter_copiers_2++;
+echo "<input type='hidden' value='$status_checkbox_copier' name='checkbox_copier[]'  />";
+//periexei ton pinaka me ta id pou 8eloume na epexergastoume
+
+} //end foreach
+
+
+$test_var_size=sizeof($test_var);
+
+echo "<input type='hidden' value='$test_var_size' name='pinax_size_copier'  />";
+
+
+echo "</form>";
+
+echo "<script>document.getElementById('form_j_submit_copiers').submit()</script>";
+
+} // end if (array_key_exists('status_submit_copiers', $_POST) && isset($_POST['status_checkbox_copier'])) 
+
+
+} // END OF SYNARTHSH 6
+?>
+
+
+
+
+
+<?php
+
+/////////////////////////////////////
+//					//
+//		SYNARTHSH 7 		// all status menu 
+//					//
+/////////////////////////////////////
+
+function cartridge_test_all($db2,$db_select,$module_name,$sectname,$usersection,$managesection,$user_id)
+{
+
+if (!array_key_exists('status_submit', $_POST)) {  
+
+$query_all="select * from equipment.cartridge_toner where (eq_type='Printer' OR eq_type='Fax' OR eq_type='Copier') order by eq_type desc";
+$return_all=mysql_query($query_all);
+$count_all_show=mysql_num_rows($return_all);
+
+
+// PERIPTWSH OPOY DEN YPARXEI KAMIA KATAXWRHSH GIA EKTYPWTES-FAX-COPIERS
+if ($count_all_show=='') 
+{ 
+echo "Δεν υπάρχει στη βάση καμία καταχώρηση για κανενός είδους μηχάνημα!<br/><br/>"; 
+echo "Παρακαλώ πατήστε <a href='http://150.140.152.10/mylis/modules.php?name=cartridges_toners&amp;op=cartridge_create&amp;view_create_type=Printer'>εδώ</a> για να δημιουργήσετε καταχώρηση για καινούριο μηχάνημα.";
+} //end if ($count_all_show=='')
+
+
+
+
+// PERIPTWSH OPOY YPARXEI TOYLAXISTON MIA KATAXWRHSH GIA EKTYPWTES-FAX-COPIERS
+else if ($count_all_show!='') 
+{
+
+echo "<form style='display:inline' name='status' action='modules.php?name=cartridges_toners&amp;op=cartridge_test_all' method='post' enctype='multipart/form-data' >";
+
+echo "<table cols='11' border='2' cellspacing='1' cellpadding='5'>";
+
+echo "<tr><td bgcolor=#D3E2EA align='center' colspan='11'><b>ΕΚΤΥΠΩΤΕΣ-ΤΗΛΕΟΜΟΙΟΤΥΠΙΚΑ-ΦΩΤΟΑΝΤΙΓΡΑΦΙΚΑ</b></td></tr>".
+"<td bgcolor=#D3E2EA align='center'><b>ΑΑ</b></td><td bgcolor=#D3E2EA align='center'><b>Είδος Μηχανήματος</b></td><td bgcolor=#D3E2EA align='center'><b>Μοντέλο</b></td><td bgcolor=#D3E2EA align='center'><b>Μαύρο Μελάνι</b></td>".
+"<td bgcolor=#D3E2EA align='center'><b>Έγχρωμο Μελάνι</b></td><td bgcolor='cyan' align='center'><b>Cyan</b></td><td bgcolor='magenta' align='center'><b>Magenta</b></td>".
+"<td bgcolor='yellow' align='center'><b>Yellow</b></td><td bgcolor=#D3E2EA align='center'><b>Σχόλια</b></td>".
+"<td bgcolor=#D3E2EA align='center'><b> Τελευταία Ημερομηνία Τροποποίησης</b></td><td bgcolor=#D3E2EA align='center'><b>Επεξεργασία <br/>(για Παραγγελία)</b></td></tr>";
+
+$temp_counter=0;
+while ($count_all_show>0) {
+$temp_counter++;
+$count_all_show--;
+$row_all=mysql_fetch_assoc($return_all);
+
+
+
+//Elegxoi gia na xrwmatisw ta koytakia!!
+
+if ($row_all['black_quantity']>=2) { $black_temp="bgcolor='green'"; }
+if ($row_all['black_quantity']==1) { $black_temp="bgcolor='orange'"; }		//black
+if ($row_all['black_quantity']<1) { $black_temp="bgcolor='red'"; }
+
+if ($row_all['color_quantity']>=2) { $color_temp="bgcolor='green'"; }
+if ($row_all['color_quantity']==1) { $color_temp="bgcolor='orange'"; }		//color
+if ($row_all['color_quantity']<1) { $color_temp="bgcolor='red'"; }
+
+if ($row_all['cyan_quantity']>=2) { $cyan_temp="bgcolor='green'"; }
+if ($row_all['cyan_quantity']==1) { $cyan_temp="bgcolor='orange'"; }		//cyan
+if ($row_all['cyan_quantity']<1) { $cyan_temp="bgcolor='red'"; }
+
+if ($row_all['magenta_quantity']>=2) { $magenta_temp="bgcolor='green'"; }
+if ($row_all['magenta_quantity']==1) { $magenta_temp="bgcolor='orange'"; }		//magenta
+if ($row_all['magenta_quantity']<1) { $magenta_temp="bgcolor='red'"; }
+
+if ($row_all['yellow_quantity']>=2) { $yellow_temp="bgcolor='green'"; }
+if ($row_all['yellow_quantity']==1) { $yellow_temp="bgcolor='orange'"; }		//yellow
+if ($row_all['yellow_quantity']<1) { $yellow_temp="bgcolor='red'"; }
+
+
+
+//Gia ka8e tipo melaniou, 8a valw 2 periptwseis, opou 8a elegxw ean exw perasei sti vasi tipo melaniou gia kapoion ektipwti
+
+echo "<tr><td align='center'>$temp_counter</td><td align='center'>".$row_all['eq_type']."</td><td align='center'>".$row_all['model']."</td><td align='center'>".
+"<table cols='2' rows='3' border='1'><tr><td bgcolor=#D3E2EA>Τύπος</td><td align='center'>".$row_all['black_toner']."</td></tr>".
+"<tr><td bgcolor=#D3E2EA>Διαθέσιμα Μελάνια</td><td $black_temp align='center'>".$row_all['black_quantity']."</td></tr>".
+"<tr><td bgcolor=#D3E2EA>Τιμή / #</td><td align='center'>".$row_all['black_price']."</td></tr></table></td>";
+
+// exetasi iparxis i mi color toner
+if ($row_all['color_toner']=='-' || $row_all['color_toner']=='') { echo "<td align='center'>&nbsp</td>"; }
+else 
+{
+echo "<td align='center'><table cols='2' rows='3' border='1'><tr><td bgcolor=#D3E2EA>Τύπος</td><td align='center'>".$row_all['color_toner']."</td></tr>".
+"<tr><td bgcolor=#D3E2EA>Διαθέσιμα Μελάνια</td><td $color_temp align='center'>".$row_all['color_quantity']."</td></tr>".
+"<tr><td bgcolor=#D3E2EA>Τιμή / #</td><td align='center'>".$row_all['color_price']."</td></tr></table></td>";
+}
+
+
+// exetasi iparxis i mi cyan toner
+if ($row_all['cyan_toner']=='-' || $row_all['cyan_toner']=='') { echo "<td align='center'>&nbsp</td>"; }
+else 
+{
+echo "<td align='center'><table cols='2' rows='3' border='1'><tr><td bgcolor=#D3E2EA>Τύπος</td><td align='center'>".$row_all['cyan_toner']."</td></tr>".
+"<tr><td bgcolor=#D3E2EA>Διαθέσιμα Μελάνια</td><td $cyan_temp align='center'>".$row_all['cyan_quantity']."</td></tr>".
+"<tr><td bgcolor=#D3E2EA>Τιμή / #</td><td align='center'>".$row_all['cyan_price']."</td></tr></table></td>";
+}
+
+// exetasi iparxis i mi magenta toner
+if ($row_all['magenta_toner']=='-' || $row_all['magenta_toner']=='') { echo "<td align='center'>&nbsp</td>"; }
+else 
+{
+echo "<td align='center'><table cols='2' rows='3' border='1'><tr><td bgcolor=#D3E2EA>Τύπος</td><td align='center'>".$row_all['magenta_toner']."</td></tr>".
+"<tr><td bgcolor=#D3E2EA>Διαθέσιμα Μελάνια</td><td $magenta_temp align='center'>".$row_all['magenta_quantity']."</td></tr>".
+"<tr><td bgcolor=#D3E2EA>Τιμή / #</td><td align='center'>".$row_all['magenta_price']."</td></tr></table></td>";
+}
+
+// exetasi iparxis i mi yellow toner
+if ($row_all['yellow_toner']=='-' || $row_all['yellow_toner']=='') { echo "<td align='center'>&nbsp</td>"; }
+else 
+{
+echo "<td align='center'><table cols='2' rows='3' border='1'><tr><td bgcolor=#D3E2EA>Τύπος</td><td align='center'>".$row_all['yellow_toner']."</td></tr>".
+"<tr><td bgcolor=#D3E2EA>Διαθέσιμα Μελάνια</td><td $yellow_temp align='center'>".$row_all['yellow_quantity']."</td></tr>".
+"<tr><td bgcolor=#D3E2EA>Τιμή / #</td><td align='center'>".$row_all['yellow_price']."</td></tr></table></td>";
+}
+
+echo "<td>".$row_all['comment']."</td>".
+
+"<td align='center'>".$row_all['date_check']."</td>".
+
+"<td align='center'><input type='checkbox' name='status_checkbox[]' value='".$row_all['id']."' /></td>".
+
+"</tr>";
+
+} //end while ($count_all_show>0)
+
+echo "</table>";
+
+echo "<br/><input type='submit' value='Επεξεργασία' name='status_submit' />".
+"<input type='reset' value='Επαναφορά' name='status_reset' />";
+
+echo "</form>";
+
+
+} //end else
+
+} // end if (!array_key_exists('status_submit', $_POST)) {  
+
+
+
+if (array_key_exists('status_submit', $_POST) && !isset($_POST['status_checkbox'])) {  
+
+echo "Παρακαλώ επιλέξτε πρώτα κάποιο μηχάνημα για επεξεργασία!<br/><br/>";
+echo "<form style='display:inline' name='test' action='modules.php?name=cartridges_toners&amp;op=cartridge_test_all' method='post' enctype='multipart/form-data' >".
+"Για να επιστρέψετε στο μενού με τα μηχανήματα, επιλέξτε 'Επιστροφή'. <br/><br/>".
+"<input type='reset' value='Επιστροφή' onclick='javascript:history.go(-1);' /></form>";
+
+} // end if (array_key_exists('status_submit', $_POST) && !isset($_POST['status_checkbox'])) 
+
+
+
+
+if (array_key_exists('status_submit', $_POST) && isset($_POST['status_checkbox'])) {  
+
+echo "<form style='display:inline' name='pass_hidden_id' id='form_j_submit_all' action='modules.php?name=cartridges_toners&amp;op=cartridge_order_all' method='post' enctype='multipart/form-data' >";
+
+$temp_counter_2=0;
+foreach ($_POST['status_checkbox'] as $status_checkbox) {
+
+$test_var[$temp_counter_2]=$status_checkbox;
+
+$temp_counter_2++;
+echo "<input type='hidden' value='$status_checkbox' name='checkbox[]'  />";
+//periexei ton pinaka me ta id pou 8eloume na epexergastoume
+
+} //end foreach
+
+
+$test_var_size=sizeof($test_var);
+
+echo "<input type='hidden' value='$test_var_size' name='pinax_size'  />";
+
+
+echo "</form>";
+
+echo "<script>document.getElementById('form_j_submit_all').submit()</script>";
+
+} // end if (array_key_exists('status_submit', $_POST) && isset($_POST['status_checkbox'])) 
+
+
+} // END OF SYNARTHSH 7
+?>
+
+
+
+
+<?php
+
+/////////////////////////////////////
+//					//
+//		SYNARTHSH 8 		// cartridges order menu 
+//					//
+/////////////////////////////////////
+
+function cartridge_order_menu($db2,$db_select,$module_name,$sectname,$usersection,$managesection,$user_id)
+{
+
+
+opentable();
+
+echo "<table border=0 align='center'><tr>";
+echo "<tr><td align=center valign=top> <button style=\"width=200; height=50;\" "
+    ."onClick=\"javascript:window.location='modules.php?name=$module_name&amp;op=cartridge_test_printers';\" >"
+    ."<table border=0 width=200 height=45><tr><td align=center valign=middle>Έλεγχος Αναλωσίμων <br/>Εκτυπωτών</td></tr></button></table></td></tr>";
+echo "<tr><td align=center valign=top> <button style=\"width=200; height=50;\" "
+    ."onClick=\"javascript:window.location='modules.php?name=$module_name&amp;op=cartridge_test_faxes';\" >"
+    ."<table border=0 width=200 height=45><tr><td align=center valign=middle>Έλεγχος Αναλωσίμων <br/>Τηλεομοιοτυπικών</td></tr></button></table></td></tr>";
+echo "<tr><td align=center valign=top> <button style=\"width=200; height=50;\" "
+    ."onClick=\"javascript:window.location='modules.php?name=$module_name&amp;op=cartridge_test_copiers';\" >"
+    ."<table border=0 width=200 height=45><tr><td align=center valign=middle>Έλεγχος Αναλωσίμων <br/>Φωτοαντιγραφικών</td></tr></button></table></td></tr>";
+echo "<tr><td align=center valign=top> <button style=\"width=200; height=50;\" "
+    ."onClick=\"javascript:window.location='modules.php?name=$module_name&amp;op=cartridge_test_all';\" >"
+    ."<table border=0 width=200 height=45><tr><td align=center valign=middle><b>Συνολικός Έλεγχος Αναλωσίμων</b></td></tr></button></table></td></tr>";
+echo "</tr></table>";
+
+
+closetable();
+
+} // END OF SYNARTHSH 8
+?>
+
+
+
+
+<?php
+
+/////////////////////////////////////
+//					//
+//		SYNARTHSH 9 		// printer cartridges order menu 
+//					//
+/////////////////////////////////////
+
+function cartridge_order_printers($db2,$db_select,$module_name,$sectname,$usersection,$managesection,$user_id)
+{
+
+//Oi akolou8es times proerxontai apo ti sinartisi No 6
+// $_POST['pinax_size']== to mege8os tou pinaka, diladi posous printers exw dialexei
+// $_POST[checkbox][$i]== ta stoixeia tou pinaka
+
+
+for ($i=0;$i<$_POST['pinax_size'];$i++) {
+
+$query_choose="select * from equipment.cartridge_toner where id='".$_POST[checkbox][$i]."'";
+$ret_query_choose=mysql_query($query_choose);
+$row_query_choose=mysql_fetch_assoc($ret_query_choose);
+
+echo "<form style='display:inline' name='choose_printers' action='modules.php?name=cartridges_toners&amp;op=cartridge_order_printers' method='post' enctype='multipart/form-data' >";
+
+echo "<table cols='4' border='2' cellspacing='1' cellpadding='5'>";
+
+echo "<tr><td bgcolor=#D3E2EA align='center'><b>ΑΑ: ".($i+1)."</b></td><td bgcolor=#D3E2EA colspan='3' align='center'><b>".$row_query_choose['eq_type']." - ".$row_query_choose['model']."</b></td></tr>";
+
+echo "<tr><td colspan='2' align='center'><b>Στοιχεία</b></td><td colspan='2' align='center'><b>Παραγγελία</b></td></tr>";
+
+
+//Mauro melani
+echo "<tr><td colspan='2'><table border='1' >".
+"<tr><td>Τύπος Μαύρου Μελανιού</td><td>".$row_query_choose['black_toner']."</td></tr>".
+"<tr><td>Διαθέσιμα Μαύρα Μελάνια</td><td>".$row_query_choose['black_quantity']."</td></tr>".
+"<tr><td>Ενδεικτική Τιμή (Ευρώ)</td><td>".$row_query_choose['black_price']."</td></tr>".
+"</table></td>".
+"<td colspan='2'><table border='1' cellspacing='5' cellpadding='5'>".
+"<tr><td># Μαύρων</td><td><input type='text' id='black_number_$i' onchange='calc_price_black($i);' /></td></tr>".
+"<tr><td>Εκτιμώμενο Κόστος</td><td><input type='text' id='black_cost_$i' value='0' /></td></tr>".
+"</table></td>".
+"</tr>";
+echo "<input type='hidden' id='black_price_$i' value='".$row_query_choose['black_price']."' />";
+
+
+
+//elegxoi gia to ean iparxoun kai alla eidi melaniwn, pera apo to mauro
+
+//Elegxos COLOR
+if ( isset($row_query_choose['color_toner']) && $row_query_choose['color_toner']!='' && $row_query_choose['color_toner']!='-') {
+echo "<tr><td colspan='2'><table border='1' >".
+"<tr><td>Τύπος Έγχρωμου Μελανιού</td><td>".$row_query_choose['color_toner']."</td></tr>".
+"<tr><td>Διαθέσιμα Έγχρωμα Μελάνια</td><td>".$row_query_choose['color_quantity']."</td></tr>".
+"<tr><td>Ενδεικτική Τιμή (Ευρώ)</td><td>".$row_query_choose['color_price']."</td></tr>".
+"</table></td>".
+"<td colspan='2'><table border='1' cellspacing='5' cellpadding='5'>".
+"<tr><td># Έγχρωμων</td><td><input type='text' id='color_number_$i' onchange='calc_price_color($i);' /></td></tr>".
+"<tr><td>Εκτιμώμενο Κόστος</td><td><input type='text' id='color_cost_$i' value='0' /></td></tr>".
+"</table></td>".
+"</tr>";
+echo "<input type='hidden' id='color_price_$i' value='".$row_query_choose['color_price']."' />";
+}
+else { echo "<input type='hidden' id='color_cost_$i' value='0' />"; }
+
+//else if ($row_query_choose['color_toner']=='' || $row_query_choose['color_toner']=='-')
+//{ 
+//echo "<input type='hidden' id='color_price_$i' value='0' />";
+//}
+
+
+
+//Elegxos CYAN
+if ($row_query_choose['cyan_toner']!='' && $row_query_choose['cyan_toner']!='-') {
+echo "<tr><td colspan='2'><table border='1' >".
+"<tr><td>Τύπος Cyan Μελανιού</td><td>".$row_query_choose['cyan_toner']."</td></tr>".
+"<tr><td>Διαθέσιμα Cyan Μελάνια</td><td>".$row_query_choose['cyan_quantity']."</td></tr>".
+"<tr><td>Ενδεικτική Τιμή (Ευρώ)</td><td>".$row_query_choose['cyan_price']."</td></tr>".
+"</table></td>".
+"<td colspan='2'><table border='1' cellspacing='5' cellpadding='5'>".
+"<tr><td bgcolor='cyan'># Cyan</td><td><input type='text' id='cyan_number_$i' onchange='calc_price_cyan($i);' /></td></tr>".
+"<tr><td>Εκτιμώμενο Κόστος</td><td><input type='text' id='cyan_cost_$i' value='0' /></td></tr>".
+"</table></td>".
+"</tr>";
+echo "<input type='hidden' id='cyan_price_$i' value='".$row_query_choose['cyan_price']."' />";
+}
+else if ($row_query_choose['cyan_toner']=='' || $row_query_choose['cyan_toner']=='-')
+{ echo "<input type='hidden' id='cyan_cost_$i' value='0' />"; }
+
+
+//Elegxos MAGENTA
+if ($row_query_choose['magenta_toner']!='' && $row_query_choose['magenta_toner']!='-') {
+echo "<tr><td colspan='2'><table border='1' >".
+"<tr><td>Τύπος Magenta Μελανιού</td><td>".$row_query_choose['magenta_toner']."</td></tr>".
+"<tr><td>Διαθέσιμα Magenta Μελάνια</td><td>".$row_query_choose['magenta_quantity']."</td></tr>".
+"<tr><td>Ενδεικτική Τιμή (Ευρώ)</td><td>".$row_query_choose['magenta_price']."</td></tr>".
+"</table></td>".
+"<td colspan='2'><table border='1' cellspacing='5' cellpadding='5'>".
+"<tr><td bgcolor='magenta'># Magenta</td><td><input type='text' id='magenta_number_$i' onchange='calc_price_magenta($i);' /></td></tr>".
+"<tr><td>Εκτιμώμενο Κόστος</td><td><input type='text' id='magenta_cost_$i' value='0' /></td></tr>".
+"</table></td>".
+"</tr>";
+echo "<input type='hidden' id='magenta_price_$i' value='".$row_query_choose['magenta_price']."' />";
+}
+else if ($row_query_choose['magenta_toner']=='' || $row_query_choose['magenta_toner']=='-') 
+{ echo "<input type='hidden' id='magenta_cost_$i' value='0' />"; }
+
+
+//Elegxos YELLOW
+if ($row_query_choose['yellow_toner']!='' && $row_query_choose['yellow_toner']!='-') {
+echo "<tr><td colspan='2'><table border='1' >".
+"<tr><td>Τύπος Yellow Μελανιού</td><td>".$row_query_choose['yellow_toner']."</td></tr>".
+"<tr><td>Διαθέσιμα Yellow Μελάνια</td><td>".$row_query_choose['yellow_quantity']."</td></tr>".
+"<tr><td>Ενδεικτική Τιμή (Ευρώ)</td><td>".$row_query_choose['yellow_price']."</td></tr>".
+"</table></td>".
+"<td colspan='2'><table border='1' cellspacing='5' cellpadding='5'>".
+"<tr><td bgcolor='yellow'># Yellow</td><td><input type='text' id='yellow_number_$i' onchange='calc_price_yellow($i);' /></td></tr>".
+"<tr><td>Εκτιμώμενο Κόστος</td><td><input type='text' id='yellow_cost_$i' value='0' /></td></tr>".
+"</table></td>".
+"</tr>";
+echo "<input type='hidden' id='yellow_price_$i' value='".$row_query_choose['yellow_price']."' />";
+}
+else if ($row_query_choose['yellow_toner']=='' || $row_query_choose['yellow_toner']=='-')
+{ 
+echo "<input type='hidden' id='yellow_cost_$i' value='0' />"; 
+}
+
+
+
+echo "<tr><td colspan='2'><b>Συνολικό Εκτιμώμενο Κόστος Αναλωσίμων Εκτυπωτή</b></td><td align='center'><input type='text' value='0' id='cost_per_machine_$i' /></td><td align='center'><input type='button' value='Υπολογισμός' id='order_button_$i' onclick='calculate_cost($i);' /></td></tr>";
+
+echo "</table>";
+echo "<br /><hr>";
+//echo "<input type='hidden' id='arr_size' value='".$_POST['pinax_size']."' />";
+
+
+} //end for
+
+
+//SOS
+
+
+echo "<table cols='4' border='2' cellspacing='1' cellpadding='5'>";
+echo "<tr><td colspan='2'><b>Τελικό Εκτιμώμενο Κόστος Εκτυπωτών</b></td><td><input type='text' value='0' id='total_cost_per_machine' /></td>";
+echo "<td><input type='button' value='Τελικός Υπολογισμός' onclick='calc_total(".$_POST['pinax_size'].");' /></td></tr></table>";
+
+echo "</form>";
+
+
+} // END OF SYNARTHSH 9
+?>
+
+
+
+
+
+<?php
+
+/////////////////////////////////////
+//					//
+//		SYNARTHSH 10 		// faxes cartridges order menu 
+//					//
+/////////////////////////////////////
+
+function cartridge_order_faxes($db2,$db_select,$module_name,$sectname,$usersection,$managesection,$user_id)
+{
+
+//Oi akolou8es times proerxontai apo ti sinartisi No 7
+// $_POST['pinax_size_fax']== to mege8os tou pinaka, diladi posa faxes exw dialexei
+// $_POST[checkbox_fax][$i]== ta stoixeia tou pinaka
+
+
+for ($i=0;$i<$_POST['pinax_size_fax'];$i++) {
+
+$query_choose_fax="select * from equipment.cartridge_toner where id='".$_POST[checkbox_fax][$i]."'";
+$ret_query_choose_fax=mysql_query($query_choose_fax);
+$row_query_choose_fax=mysql_fetch_assoc($ret_query_choose_fax);
+
+echo "<form style='display:inline' name='choose_faxes' action='modules.php?name=cartridges_toners&amp;op=cartridge_order_faxes' method='post' enctype='multipart/form-data' >";
+
+echo "<table cols='4' border='2' cellspacing='1' cellpadding='5'>";
+
+echo "<tr><td bgcolor=#D3E2EA align='center'><b>ΑΑ: ".($i+1)."</b></td><td bgcolor=#D3E2EA colspan='3' align='center'><b>".$row_query_choose_fax['eq_type']." - ".$row_query_choose_fax['model']."</b></td></tr>";
+
+echo "<tr><td colspan='2' align='center'><b>Στοιχεία</b></td><td colspan='2' align='center'><b>Παραγγελία</b></td></tr>";
+
+
+//Mauro melani
+echo "<tr><td colspan='2'><table border='1' >".
+"<tr><td>Τύπος Μαύρου Μελανιού</td><td>".$row_query_choose_fax['black_toner']."</td></tr>".
+"<tr><td>Διαθέσιμα Μαύρα Μελάνια</td><td>".$row_query_choose_fax['black_quantity']."</td></tr>".
+"<tr><td>Ενδεικτική Τιμή (Ευρώ)</td><td>".$row_query_choose_fax['black_price']."</td></tr>".
+"</table></td>".
+"<td colspan='2'><table border='1' cellspacing='5' cellpadding='5'>".
+"<tr><td># Μαύρων</td><td><input type='text' id='black_number_$i' onchange='calc_price_black($i);' /></td></tr>".
+"<tr><td>Εκτιμώμενο Κόστος</td><td><input type='text' id='black_cost_$i' value='0' /></td></tr>".
+"</table></td>".
+"</tr>";
+echo "<input type='hidden' id='black_price_$i' value='".$row_query_choose_fax['black_price']."' />";
+
+
+echo "<tr><td colspan='2'><b>Συνολικό Εκτιμώμενο Κόστος Αναλωσίμων Τηλε-ομοιοτυπικού</b></td><td align='center'><input type='text' value='0' id='cost_per_machine_$i' /></td><td align='center'><input type='button' value='Υπολογισμός' id='order_button_$i' onclick='calculate_fax_cost($i);' /></td></tr>";
+
+echo "</table>";
+echo "<br /><hr>";
+//echo "<input type='hidden' id='arr_size' value='".$_POST['pinax_size_fax']."' />";
+
+
+} //end for
+
+
+//SOS
+
+
+echo "<table cols='4' border='2' cellspacing='1' cellpadding='5'>";
+echo "<tr><td colspan='2'><b>Τελικό Εκτιμώμενο Κόστος Τηλε-ομοιοτυπικών</b></td><td><input type='text' value='0' id='total_cost_per_machine' /></td>";
+echo "<td><input type='button' value='Τελικός Υπολογισμός' onclick='calc_total(".$_POST['pinax_size_fax'].");' /></td></tr></table>";
+
+echo "</form>";
+
+
+} // END OF SYNARTHSH 10
+?>
+
+
+
+
+
+<?php
+
+/////////////////////////////////////
+//					//
+//		SYNARTHSH 11 		// copier cartridges order menu 
+//					//
+/////////////////////////////////////
+
+function cartridge_order_copiers($db2,$db_select,$module_name,$sectname,$usersection,$managesection,$user_id)
+{
+
+//Oi akolou8es times proerxontai apo ti sinartisi No 8
+// $_POST['pinax_size_copier']== to mege8os tou pinaka, diladi posa copiers exw dialexei
+// $_POST[checkbox_copier][$i]== ta stoixeia tou pinaka
+
+for ($i=0;$i<$_POST['pinax_size_copier'];$i++) {
+
+$query_choose_copier="select * from equipment.cartridge_toner where id='".$_POST[checkbox_copier][$i]."'";
+$ret_query_choose_copier=mysql_query($query_choose_copier);
+$row_query_choose_copier=mysql_fetch_assoc($ret_query_choose_copier);
+
+echo "<form style='display:inline' name='choose_copiers' action='modules.php?name=cartridges_toners&amp;op=cartridge_order_copiers' method='post' enctype='multipart/form-data' >";
+
+echo "<table cols='4' border='2' cellspacing='1' cellpadding='5'>";
+
+echo "<tr><td bgcolor=#D3E2EA align='center'><b>ΑΑ: ".($i+1)."</b></td><td bgcolor=#D3E2EA colspan='3' align='center'><b>".$row_query_choose_copier['eq_type']." - ".$row_query_choose_copier['model']."</b></td></tr>";
+
+echo "<tr><td colspan='2' align='center'><b>Στοιχεία</b></td><td colspan='2' align='center'><b>Παραγγελία</b></td></tr>";
+
+
+//Mauro melani
+echo "<tr><td colspan='2'><table border='1' >".
+"<tr><td>Τύπος Μαύρου Μελανιού</td><td>".$row_query_choose_copier['black_toner']."</td></tr>".
+"<tr><td>Διαθέσιμα Μαύρα Μελάνια</td><td>".$row_query_choose_copier['black_quantity']."</td></tr>".
+"<tr><td>Ενδεικτική Τιμή (Ευρώ)</td><td>".$row_query_choose_copier['black_price']."</td></tr>".
+"</table></td>".
+"<td colspan='2'><table border='1' cellspacing='5' cellpadding='5'>".
+"<tr><td># Μαύρων</td><td><input type='text' id='black_number_$i' onchange='calc_price_black($i);' /></td></tr>".
+"<tr><td>Εκτιμώμενο Κόστος</td><td><input type='text' id='black_cost_$i' value='0' /></td></tr>".
+"</table></td>".
+"</tr>";
+echo "<input type='hidden' id='black_price_$i' value='".$row_query_choose_copier['black_price']."' />";
+
+
+echo "<tr><td colspan='2'><b>Συνολικό Εκτιμώμενο Κόστος Αναλωσίμων Τηλε-ομοιοτυπικού</b></td><td align='center'><input type='text' value='0' id='cost_per_machine_$i' /></td><td align='center'><input type='button' value='Υπολογισμός' id='order_button_$i' onclick='calculate_copier_cost($i);' /></td></tr>";
+
+echo "</table>";
+echo "<br /><hr>";
+//echo "<input type='hidden' id='arr_size' value='".$_POST['pinax_size_copier']."' />";
+
+
+} //end for
+
+
+//SOS
+
+
+echo "<table cols='4' border='2' cellspacing='1' cellpadding='5'>";
+echo "<tr><td colspan='2'><b>Τελικό Εκτιμώμενο Κόστος Τηλε-ομοιοτυπικών</b></td><td><input type='text' value='0' id='total_cost_per_machine' /></td>";
+echo "<td><input type='button' value='Τελικός Υπολογισμός' onclick='calc_total(".$_POST['pinax_size_copier'].");' /></td></tr></table>";
+
+echo "</form>";
+
+} // END OF SYNARTHSH 11
+?>
+
+
+
+<?php
+
+/////////////////////////////////////
+//					//
+//		SYNARTHSH 12 		// all cartridges order menu 
+//					//
+/////////////////////////////////////
+
+function cartridge_order_all($db2,$db_select,$module_name,$sectname,$usersection,$managesection,$user_id)
+{
+
+//+++++++++++++++++++++++++++++++++++++++++++++++++
+
+//Oi akolou8es times proerxontai apo ti sinartisi No 9
+// $_POST['pinax_size']== to mege8os tou pinaka, diladi posous printers-fax-copiers exw dialexei
+// $_POST[checkbox][$i]== ta stoixeia tou pinaka
+
+
+for ($i=0;$i<$_POST['pinax_size'];$i++) {
+
+$query_choose="select * from equipment.cartridge_toner where id='".$_POST[checkbox][$i]."'";
+$ret_query_choose=mysql_query($query_choose);
+$row_query_choose=mysql_fetch_assoc($ret_query_choose);
+
+echo "<form style='display:inline' name='choose_all' action='modules.php?name=cartridges_toners&amp;op=cartridge_order_all' method='post' enctype='multipart/form-data' >";
+
+echo "<table cols='4' border='2' cellspacing='1' cellpadding='5'>";
+
+echo "<tr><td bgcolor=#D3E2EA align='center'><b>ΑΑ: ".($i+1)."</b></td><td bgcolor=#D3E2EA colspan='3' align='center'><b>".$row_query_choose['eq_type']." - ".$row_query_choose['model']."</b></td></tr>";
+
+echo "<tr><td colspan='2' align='center'><b>Στοιχεία</b></td><td colspan='2' align='center'><b>Παραγγελία</b></td></tr>";
+
+
+//Mauro melani
+echo "<tr><td colspan='2'><table border='1' >".
+"<tr><td>Τύπος Μαύρου Μελανιού</td><td>".$row_query_choose['black_toner']."</td></tr>".
+"<tr><td>Διαθέσιμα Μαύρα Μελάνια</td><td>".$row_query_choose['black_quantity']."</td></tr>".
+"<tr><td>Ενδεικτική Τιμή (Ευρώ)</td><td>".$row_query_choose['black_price']."</td></tr>".
+"</table></td>".
+"<td colspan='2'><table border='1' cellspacing='5' cellpadding='5'>".
+"<tr><td># Μαύρων</td><td><input type='text' id='black_number_$i' onchange='calc_price_black($i);' /></td></tr>".
+"<tr><td>Εκτιμώμενο Κόστος</td><td><input type='text' id='black_cost_$i' value='0' /></td></tr>".
+"</table></td>".
+"</tr>";
+echo "<input type='hidden' id='black_price_$i' value='".$row_query_choose['black_price']."' />";
+
+
+
+//elegxoi gia to ean iparxoun kai alla eidi melaniwn, pera apo to mauro
+
+//Elegxos COLOR
+if ( isset($row_query_choose['color_toner']) && $row_query_choose['color_toner']!='' && $row_query_choose['color_toner']!='-') {
+echo "<tr><td colspan='2'><table border='1' >".
+"<tr><td>Τύπος Έγχρωμου Μελανιού</td><td>".$row_query_choose['color_toner']."</td></tr>".
+"<tr><td>Διαθέσιμα Έγχρωμα Μελάνια</td><td>".$row_query_choose['color_quantity']."</td></tr>".
+"<tr><td>Ενδεικτική Τιμή (Ευρώ)</td><td>".$row_query_choose['color_price']."</td></tr>".
+"</table></td>".
+"<td colspan='2'><table border='1' cellspacing='5' cellpadding='5'>".
+"<tr><td># Έγχρωμων</td><td><input type='text' id='color_number_$i' onchange='calc_price_color($i);' /></td></tr>".
+"<tr><td>Εκτιμώμενο Κόστος</td><td><input type='text' id='color_cost_$i' value='0' /></td></tr>".
+"</table></td>".
+"</tr>";
+echo "<input type='hidden' id='color_price_$i' value='".$row_query_choose['color_price']."' />";
+}
+else { echo "<input type='hidden' id='color_cost_$i' value='0' />"; }
+
+//else if ($row_query_choose['color_toner']=='' || $row_query_choose['color_toner']=='-')
+//{ 
+//echo "<input type='hidden' id='color_price_$i' value='0' />";
+//}
+
+
+
+//Elegxos CYAN
+if ($row_query_choose['cyan_toner']!='' && $row_query_choose['cyan_toner']!='-') {
+echo "<tr><td colspan='2'><table border='1' >".
+"<tr><td>Τύπος Cyan Μελανιού</td><td>".$row_query_choose['cyan_toner']."</td></tr>".
+"<tr><td>Διαθέσιμα Cyan Μελάνια</td><td>".$row_query_choose['cyan_quantity']."</td></tr>".
+"<tr><td>Ενδεικτική Τιμή (Ευρώ)</td><td>".$row_query_choose['cyan_price']."</td></tr>".
+"</table></td>".
+"<td colspan='2'><table border='1' cellspacing='5' cellpadding='5'>".
+"<tr><td bgcolor='cyan'># Cyan</td><td><input type='text' id='cyan_number_$i' onchange='calc_price_cyan($i);' /></td></tr>".
+"<tr><td>Εκτιμώμενο Κόστος</td><td><input type='text' id='cyan_cost_$i' value='0' /></td></tr>".
+"</table></td>".
+"</tr>";
+echo "<input type='hidden' id='cyan_price_$i' value='".$row_query_choose['cyan_price']."' />";
+}
+else if ($row_query_choose['cyan_toner']=='' || $row_query_choose['cyan_toner']=='-')
+{ echo "<input type='hidden' id='cyan_cost_$i' value='0' />"; }
+
+
+//Elegxos MAGENTA
+if ($row_query_choose['magenta_toner']!='' && $row_query_choose['magenta_toner']!='-') {
+echo "<tr><td colspan='2'><table border='1' >".
+"<tr><td>Τύπος Magenta Μελανιού</td><td>".$row_query_choose['magenta_toner']."</td></tr>".
+"<tr><td>Διαθέσιμα Magenta Μελάνια</td><td>".$row_query_choose['magenta_quantity']."</td></tr>".
+"<tr><td>Ενδεικτική Τιμή (Ευρώ)</td><td>".$row_query_choose['magenta_price']."</td></tr>".
+"</table></td>".
+"<td colspan='2'><table border='1' cellspacing='5' cellpadding='5'>".
+"<tr><td bgcolor='magenta'># Magenta</td><td><input type='text' id='magenta_number_$i' onchange='calc_price_magenta($i);' /></td></tr>".
+"<tr><td>Εκτιμώμενο Κόστος</td><td><input type='text' id='magenta_cost_$i' value='0' /></td></tr>".
+"</table></td>".
+"</tr>";
+echo "<input type='hidden' id='magenta_price_$i' value='".$row_query_choose['magenta_price']."' />";
+}
+else if ($row_query_choose['magenta_toner']=='' || $row_query_choose['magenta_toner']=='-') 
+{ echo "<input type='hidden' id='magenta_cost_$i' value='0' />"; }
+
+
+//Elegxos YELLOW
+if ($row_query_choose['yellow_toner']!='' && $row_query_choose['yellow_toner']!='-') {
+echo "<tr><td colspan='2'><table border='1' >".
+"<tr><td>Τύπος Yellow Μελανιού</td><td>".$row_query_choose['yellow_toner']."</td></tr>".
+"<tr><td>Διαθέσιμα Yellow Μελάνια</td><td>".$row_query_choose['yellow_quantity']."</td></tr>".
+"<tr><td>Ενδεικτική Τιμή (Ευρώ)</td><td>".$row_query_choose['yellow_price']."</td></tr>".
+"</table></td>".
+"<td colspan='2'><table border='1' cellspacing='5' cellpadding='5'>".
+"<tr><td bgcolor='yellow'># Yellow</td><td><input type='text' id='yellow_number_$i' onchange='calc_price_yellow($i);' /></td></tr>".
+"<tr><td>Εκτιμώμενο Κόστος</td><td><input type='text' id='yellow_cost_$i' value='0' /></td></tr>".
+"</table></td>".
+"</tr>";
+echo "<input type='hidden' id='yellow_price_$i' value='".$row_query_choose['yellow_price']."' />";
+}
+else if ($row_query_choose['yellow_toner']=='' || $row_query_choose['yellow_toner']=='-')
+{ 
+echo "<input type='hidden' id='yellow_cost_$i' value='0' />"; 
+}
+
+
+
+echo "<tr><td colspan='2'><b>Συνολικό Εκτιμώμενο Κόστος Αναλωσίμων Μηχανημάτων</b></td><td align='center'><input type='text' value='0' id='cost_per_machine_$i' /></td><td align='center'><input type='button' value='Υπολογισμός' id='order_button_$i' onclick='calculate_cost($i);' /></td></tr>";
+
+echo "</table>";
+echo "<br /><hr>";
+//echo "<input type='hidden' id='arr_size' value='".$_POST['pinax_size']."' />";
+
+
+} //end for
+
+
+//SOS
+
+
+echo "<table cols='4' border='2' cellspacing='1' cellpadding='5'>";
+echo "<tr><td colspan='2'><b>Τελικό Εκτιμώμενο Κόστος Μηχανημάτων</b></td><td><input type='text' value='0' id='total_cost_per_machine' /></td>";
+echo "<td><input type='button' value='Τελικός Υπολογισμός' onclick='calc_total(".$_POST['pinax_size'].");' /></td></tr></table>";
+
+echo "</form>";
+
+
+
+//+++++++++++++++++++++++++++++++++++++++++++++++++
+
+} // END OF SYNARTHSH 12
+
+?>
+
+
+
+
+<?php
+
+
+switch($op)
+{
+case "cartridge_create":
+ 	cartridge_create($db2,$db_select,$module_name,$sectname,$usersection,$managesection,$user_id);
+	break;
+case "cartridge_show":
+ 	cartridge_show($db2,$db_select,$module_name,$sectname,$usersection,$managesection,$user_id);
+	break;
+case "cartridge_test_menu":
+ 	cartridge_test_menu($db2,$db_select,$module_name,$sectname,$usersection,$managesection,$user_id);
+	break;
+case "cartridge_test_printers":
+ 	cartridge_test_printers($db2,$db_select,$module_name,$sectname,$usersection,$managesection,$user_id);
+	break;
+case "cartridge_test_faxes":
+ 	cartridge_test_faxes($db2,$db_select,$module_name,$sectname,$usersection,$managesection,$user_id);
+	break;
+case "cartridge_test_copiers":
+ 	cartridge_test_copiers($db2,$db_select,$module_name,$sectname,$usersection,$managesection,$user_id);
+	break;
+case "cartridge_test_all":
+ 	cartridge_test_all($db2,$db_select,$module_name,$sectname,$usersection,$managesection,$user_id);
+	break;
+case "cartridge_order_menu":
+ 	cartridge_order_menu($db2,$db_select,$module_name,$sectname,$usersection,$managesection,$user_id);
+	break;
+case "cartridge_order_printers":
+ 	cartridge_order_printers($db2,$db_select,$module_name,$sectname,$usersection,$managesection,$user_id);
+	break;
+case "cartridge_order_faxes":
+ 	cartridge_order_faxes($db2,$db_select,$module_name,$sectname,$usersection,$managesection,$user_id);
+	break;
+case "cartridge_order_copiers":
+ 	cartridge_order_copiers($db2,$db_select,$module_name,$sectname,$usersection,$managesection,$user_id);
+	break;
+case "cartridge_order_all":
+ 	cartridge_order_all($db2,$db_select,$module_name,$sectname,$usersection,$managesection,$user_id);
+	break;
+}
+
+closetable();
+
+include("footer.php");
+include("includes/counter.php");
+
+?>
