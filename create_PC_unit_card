@@ -1,0 +1,2847 @@
+<?php
+
+require_once("mainfile.php");
+$module_name = basename(dirname(__FILE__));
+require_once("modules/$module_name/common.php");
+
+get_lang($module_name);
+$pagetitle = "- Κάρτα Κατάστασης Μονάδων Η/Υ (Α1)";
+include("header.php");
+
+global $prefix,$db,$user,$userinfo,$usersection,$sectname;
+getusrinfo($user);
+
+$user_id=$userinfo[user_id];
+
+$user_name=$userinfo[username];
+$user_ip=getenv("REMOTE_ADDR");
+
+$temp=getusrsection($user_id);
+$staff_selection_id=$usersection[staff_section_id];
+$temp1=getusrsectname($usersection[staff_section_id]);
+getmanagesection();
+
+$db2 =mysql_connect("localhost", "root", "") or die(mysql_error());
+ if (!$db2)
+  {
+   die('Could not connect :'.mysql_error());
+  }
+ else
+ {
+  $db_select = mysql_select_db("equipment");
+  mysql_query("SET NAMES 'greek'",$db2);
+  if(!$db_select)
+  {
+    die('Could not select the database: <br />'.mysql_error());
+  }
+ }
+
+echo "<script language=\"javascript\" type=\"text/javascript\" src=\"modules/card_PC_units/java_scripts.js\"></script>";
+
+opentable();
+
+
+echo "<table border=0><tr>";
+echo "<td align=center valign=top> <button style=\"width=200; height=50;\" "
+    ."onClick=\"javascript:window.location='modules.php?name=$module_name&amp;op=card_create';\" >"
+    ."<table border=0 width=200 height=45><tr><td align=center valign=middle><b>Δημιουργία</b> Κάρτας Κατάστασης Μονάδων Η/Υ (Α1)</td></tr></button></table></td>";
+echo "<td align=center valign=top> <button style=\"width=200; height=50;\" "
+    ."onClick=\"javascript:window.location='modules.php?name=$module_name&amp;op=card_show';\" >"
+    ."<table border=0 width=200 height=45><tr><td align=center valign=middle><b>Προβολή</b> Κάρτας Κατάστασης Μονάδων Η/Υ (Α1)</td></tr></button></table></td>";
+echo "</tr></table>";
+
+
+closetable();
+
+
+
+opentable();
+
+?>
+
+<?php
+
+/////////////////////////////////////
+//					// dimiourgia kartas katastasis HY (A1)
+//		FUNCTION 1 		//
+//					//
+/////////////////////////////////////
+
+function card_create($db2,$db_select,$module_name,$sectname,$usersection,$managesection)
+{
+
+function daymonth($number)
+{
+for ($i=1;$i<$number;$i++) { echo "<option> $i </option>"; }
+}
+
+if (!array_key_exists('equip_create', $_POST)) {  
+?>
+
+<b><u>Η συμπλήρωση όλων των πεδίων με (*) είναι υποχρεωτική</u></b>
+<br/><br/>
+
+<form style="display:inline" name="main_3_form" action="modules.php?name=card_PC_units&amp;op=card_create_ok" method="post" enctype="multipart/form-data" onsubmit="return validate(main_3_form)" >
+
+<table cols="2" border="2" cellspacing="1" cellpadding="5">
+
+<tr><td bgcolor=#D3E2EA colspan="2" align="center"><b>Στοιχεία Εξοπλισμού</b></td></tr>
+
+<tr><td bgcolor=#D3E2EA><b><label for="kind">Είδος Μονάδας *</label></b></td>
+<td><select name="kind_equipment_select" id="kind_j" method="post">
+<option >Backup</option>
+<option selected>PC</option>
+<option >Server</option>
+<option >Storage</option>
+</select></td></tr>
+
+<tr><td bgcolor=#D3E2EA><b><label for="code">Κωδικός Μηχανήματος <br /> (Σειριακός Αριθμός, SN) *</label></b></td>
+<td><input type="text" name="code_txt" id="code_j" size="90" /></td></tr>
+
+<tr><td bgcolor=#D3E2EA><b><label for="sn">Αριθμός Παγίου</label></b></td>
+<td><input type="text" name="sn_txt" size="90" /></td></tr>
+
+<tr><td bgcolor=#D3E2EA><b><label for="model">Μοντέλο</label></b></td>
+<td><input type="text" name="model_txt" size="90" /></td></tr>
+
+<tr><td bgcolor=#D3E2EA><b><label for="descr">Περιγραφή Μηχανήματος</label></b></td>
+<td><textarea name="descr_txt" rows="4" cols="85" wrap="soft"></textarea></td></tr>
+
+<tr><td bgcolor=#D3E2EA><b><label for="supplier">Προμηθευτής *</label></b></td>
+<td><select name="supplier_select" id="supplier_j" method="post">
+<option value="0"></option>
+<?php
+
+$dbname = 'supplies';
+mysql_select_db($dbname);
+
+$query4="select supplier_id,supplier_name from supplies.supplier order by supplier_name";
+$return4=mysql_query($query4);
+
+$count4=mysql_num_rows($return4);
+
+while ($count4>0) {
+$count4--;
+$row4=mysql_fetch_assoc($return4);
+echo "<option>".$row4["supplier_name"]."</option>";
+}
+?>
+</select>
+</td></tr>
+
+<tr><td bgcolor=#D3E2EA><b><label for="date_purch">Ημερομηνία Αγοράς *<br />(ΗΗ / ΜΜ / ΕΕΕΕ)</label></b></td>
+<td><table cols="4" border="0">
+<td><select name="purch_day" id="day_j" method="post">
+<option></option>
+<?php daymonth(32); ?></select></td>
+<td>/</td>
+<td><select name="purch_month" id="month_j" method="post">
+<option></option>
+<?php daymonth(13); ?></select></td>
+<td>/</td>
+<td><select name="purch_year" id="year_j" method="post">
+<option></option>
+<?php 
+$current = getdate(); $year = $current['year'];
+for ($i=$year;$i>1989;$i--) { echo "<option> $i </option>"; }
+?>
+</select></td>
+</table></td></tr>
+
+<tr><td bgcolor=#D3E2EA><b><label for="invoice">Αριθμός Τιμολογίου *</label></b></td>
+<td><input type="text" name="invoice_txt" id="invoice_j" /></td></tr>
+
+<tr><td bgcolor=#D3E2EA><b><label for="guarranty">Περίοδος Εγγύησης <br />(# Μηνών)</label></b></td>
+<td><input type="text" name="guarranty_txt" /></td></tr>
+
+<tr><td bgcolor=#D3E2EA colspan="2" align="center"><b>Βασικά Αρχικά Χαρακτηριστικά Μονάδας</b></td></tr>
+
+<tr><td bgcolor=#D3E2EA><b><label for="os">Λειτουργικό Σύστημα</label></b></td>
+<td><input type="text" name="os_txt" size="90" /></td></tr>
+
+<tr><td bgcolor=#D3E2EA><b><label for="processor">Επεξεργαστές</label></b></td>
+<td><input type="text" name="processor_txt" size="90" /></td></tr>
+
+<tr><td bgcolor=#D3E2EA><b><label for="memory">Μνήμη</label></b></td>
+<td><input type="text" name="memory_txt" size="90" /></td></tr>
+
+<tr><td bgcolor=#D3E2EA><b><label for="card">Κάρτες</label></b></td>
+<td><input type="text" name="card_txt" size="90" /></td></tr>
+
+<tr><td bgcolor=#D3E2EA><b><label for="other">'Αλλο</label></b></td>
+<td><input type="text" name="other_txt" size="90" /></td></tr>
+
+</table>
+<br/>
+<input type="submit" value="Δημιουργία" name="equip_create"  />
+<input type="reset" value="Εκκαθάριση"  />
+</form>
+
+
+<?php 
+
+} //end if (!array_key_exists('equip_create', $_POST)) { 
+
+} // END OF FUNCTION 1
+
+?>
+
+<?php
+
+/////////////////////////////////////
+//					// epivevaiwsi dimiourgias kartas katastasis monadwn HY (A1)
+//		FUNCTION 2 		//
+//					//
+/////////////////////////////////////
+
+function card_create_ok($db2,$db_select,$module_name,$sectname,$usersection,$managesection)
+{
+
+
+//testarisma twn queries
+
+$dbname = 'supplies';
+mysql_select_db($dbname);
+
+
+
+$query_dokimi="select * from equipment.lis_equipment where grp='a1' and id='".$_POST['code_txt']."'";
+$ret_dokimi=mysql_query($query_dokimi);
+$row_dokimi=mysql_fetch_assoc($ret_dokimi);
+if ($row_dokimi=='') { $flag_repeat=1; } else { $flag_repeat=2; echo "<script>alert('Ο κωδικός που βάλατε υπάρχει ήδη!!');</script>";  echo "Πατήστε <a href='http://150.140.152.10/mylis/modules.php?name=card_PC_units&amp;op=card_create'>εδώ</a> για να επιστρέψετε στην προηγούμενη σελίδα.";}
+
+
+
+if (array_key_exists('equip_create', $_POST) and $flag_repeat=='1') { 
+
+
+
+//if (array_key_exists('equip_create', $_POST)) { 
+
+//AKOLOY8OYN OI ANA8ESEIS TWN ENDIAMESWN METABLHTWN PROKEIMENOY NA DIAXEIRISTOYME TO INSERTION STH BASH
+
+//Stoixeia exoplismou
+$tmp1=$_POST['kind_equipment_select'];
+$tmp2=$_POST['code_txt'];
+$tmp3=$_POST['sn_txt'];
+
+if ($_POST['model_txt']!='') { $tmp4=$_POST['model_txt']; } else { $tmp4='-'; }
+if ($_POST['descr_txt']!='') { $tmp5=$_POST['descr_txt']; } else { $tmp5='-'; }
+
+if ($_POST['supplier_select']!='') {
+$tmp6=$_POST['supplier_select'];
+$query_testing="select supplier_id from supplies.supplier where supplier_name='".$tmp6."' limit 1";
+$ret_testing=mysql_query($query_testing);
+$count_testing=mysql_num_rows($ret_testing);
+while ($count_testing>0) {
+$count_testing--;
+$row_testing=mysql_fetch_assoc($ret_testing);
+}
+$current_supplier_id=$row_testing['supplier_id'];
+}
+
+//ean den iparxei promi8eutis, supplier_id=-1
+else { $tmp6=''; $current_supplier_id=-1; 
+
+}
+
+//prepei na ginei elegxos gia to ti ginetai stin periptwsi opou den exei eisax8ei imerominia
+if ($_POST['purch_day'] !='') { $tmp7_1=$_POST['purch_day']; } else { $tmp7_1=00; }
+if ($_POST['purch_month'] !='') { $tmp7_2=$_POST['purch_month']; } else { $tmp7_2=00; }
+if ($_POST['purch_year'] !='') { $tmp7_3=$_POST['purch_year']; } else { $tmp7_3=0000; }
+$tmp7=$tmp7_3."-".$tmp7_2."-".$tmp7_1;
+
+if ($_POST['invoice_txt']!='') { $invoice=$_POST['invoice_txt']; } else { $invoice=0; }
+
+if ($_POST['guarranty_txt']!='') { $tmp8=$_POST['guarranty_txt']; } else { $tmp8=0; }
+
+//Basika xaraktiristika monadas
+if ($_POST['os_txt']!='') { $tmp9=$_POST['os_txt']; } else { $tmp9='-'; }
+if ($_POST['processor_txt']!='') { $tmp10=$_POST['processor_txt']; } else { $tmp10='-'; }
+if ($_POST['memory_txt']!='') { $tmp11=$_POST['memory_txt']; } else { $tmp11='-'; }
+if ($_POST['card_txt']!='') { $tmp12=$_POST['card_txt']; } else { $tmp12='-'; }
+if ($_POST['other_txt']!='') { $tmp13=$_POST['other_txt']; } else { $tmp13='-'; }
+
+
+//Eisagwgi twn stoixeiwn tis formas sti basi
+$query5="insert into equipment.lis_equipment ".
+"(type,id,sn,model,eq_descr,supplier_id,date_purch,invoice,guarranty_dur,".
+"op_sys,processor,memory,card,eq_other) ".
+"values ".
+"('$tmp1','$tmp2','$tmp3','$tmp4','$tmp5','$current_supplier_id','$tmp7','$invoice','$tmp8',".
+"'$tmp9','$tmp10','$tmp11','$tmp12','$tmp13')";
+
+$ret5=mysql_query($query5);
+
+?>
+
+Η δημιουργία του μηχανήματος καταχωρήθηκε επιτυχώς.<br/><br/>
+<form style="display:inline" name="6-2-3_malfunc" action="modules.php?name=card_PC_units&amp;op=card_show" method="post" enctype="multipart/form-data">
+<input type="submit" value="Προβολή Μηχανημάτων" name="create_show"  />
+</form>
+
+<?php
+
+}
+
+// mysql_free_result($ret5);
+// mysql_close($dbname);
+
+
+} // END OF FUNCTION 2
+
+?>
+
+
+<?php
+
+/////////////////////////////////////
+//					// provoli mixanimatwn //testing
+//		FUNCTION 3 		//
+//					//
+/////////////////////////////////////
+
+function card_show($db2,$db_select,$module_name,$sectname,$usersection,$managesection)
+{
+
+
+$dbname = 'equipment';
+mysql_select_db($dbname);
+
+if (!array_key_exists('submit_show' , $_POST)) {
+?>
+
+<form style="display:inline" name="criterion_1_show" id="criterion_j_submit" action="modules.php?name=card_PC_units&amp;op=card_show" method="post" enctype="multipart/form-data" onsubmit="return validate_show(criterion_1_show)">
+
+
+<!-- ARXH PINAKA -->
+<table cols="2" border="2" cellspacing="1" cellpadding="5">
+<tr><td bgcolor=#D3E2EA colspan="2" align="center"><b>ΕΠΙΛΕΞΤΕ ΚΑΠΟΙΟ ΚΡΙΤΗΡΙΟ ΓΙΑ ΤΗΝ ΠΡΟΒΟΛΗ ΤΩΝ ΜΗΧΑΝΗΜΑΤΩΝ</b><br/><i>*Επιλέξτε <b><u>ένα</u></b> από τα ακόλουθα κριτήρια*</i></td></tr>
+
+
+
+<tr><td bgcolor=#D3E2EA><b>ΕΜΦΑΝΙΣΗ ΟΛΩΝ ΤΩΝ ΜΗΧΑΝΗΜΑΤΩΝ</b></td>
+<td><input type="checkbox" name="check_all" id="check_j_all" 
+<?php 
+if ($_POST['check_all']!="") { echo "checked"; }
+if ($_POST['check_all']=="") { echo "unchecked"; }
+?>
+ onclick="reset_others(1);document.getElementById('criterion_j_submit').submit();"/></td></tr>
+
+
+
+<tr><td bgcolor=#D3E2EA><b>ΕΠΙΛΕΞΤΕ ΕΙΔΟΣ ΜΗΧΑΝΗΜΑΤΟΣ</b></td>
+<td>
+<select name="type_eq" id="type_j_eq" method="post" onchange="reset_others(2);document.getElementById('criterion_j_submit').submit();">
+<option <?php if ($_POST['type_eq']=="") { echo "selected"; }?>></option>
+<option <?php if ($_POST['type_eq']=="Backup") { echo "selected"; }?>>Backup</option>
+<option <?php if ($_POST['type_eq']=="PC") { echo "selected"; }?>>PC</option>
+<option <?php if ($_POST['type_eq']=="Server") { echo "selected"; }?>>Server</option>
+<option <?php if ($_POST['type_eq']=="Storage") { echo "selected"; }?>>Storage</option>
+</select>
+</td></tr>
+
+
+
+<tr><td bgcolor=#D3E2EA><b>ΕΠΙΛΕΞΤΕ ΚΩΔΙΚΟ ΜΗΧΑΝΗΜΑΤΟΣ</b></td>
+<td><select name="code_eq" id="code_j_eq" onchange="reset_others(3);document.getElementById('criterion_j_submit').submit();">
+<option></option>
+<?php
+$query_code_show="select id from equipment.lis_equipment where grp='a1'";
+$return_code_show=mysql_query($query_code_show);
+$count_code_show=mysql_num_rows($return_code_show);
+while ($count_code_show>0) {
+$count_code_show--;
+$row_code_show=mysql_fetch_assoc($return_code_show);
+if ($row_code_show["id"]==$_POST['code_eq']) { echo "<option selected>".$row_code_show["id"]."</option>"; }
+else if ($row_code_show["id"]!=$_POST['code_eq']) { echo "<option>".$row_code_show["id"]."</option>"; }
+}
+?>
+</td></tr>
+
+
+</table>
+<!-- TELOS PINAKA -->
+<br/>
+<input type="submit" name="submit_show" value="Προβολή" />
+<input type="hidden" name="criterion_1_check" value="1" />
+</form>
+
+<?php
+
+} //end if (!array_key_exists('submit_show' , $_POST))
+
+
+
+
+
+
+if (array_key_exists('submit_show' , $_POST)) {
+
+
+
+
+/*
+%%%%%%%%%
+%% ΟΛΑ %%
+%%%%%%%%%
+*/
+
+if (isset($_POST['check_all'])) {
+
+$q="select * from equipment.lis_equipment where grp='a1'";
+$ret=mysql_query($q);
+
+if (!$ret) {
+    die('Invalid query: ' . mysql_error());
+}
+
+if (mysql_num_rows($ret) == 0) {
+	echo "Δεν υπάρχει καμία καταχώρηση προς το παρόν. Παρακαλώ πατήστε <a href='http://150.140.152.10/mylis/modules.php?name=card_PC_units&amp;op=card_create'>εδώ</a> για να δημιουργήσετε καινούρια κάρτα κατάστασης μονάδων Η/Υ (Α1)!";
+}
+
+else{
+?>
+<form style="display:inline" name="6.2-3_form_show" action="modules.php?name=card_PC_units&amp;op=card_edit" method="post" enctype="multipart/form-data">
+
+<table cols="6" border="2" cellspacing="1" cellpadding="10">
+
+<tr><td bgcolor=#D3E2EA align="center"><b>ΑΑ</b></td><td bgcolor=#D3E2EA align="center"><b>Κωδικός Μηχανήματος</b></td><td bgcolor=#D3E2EA align="center"><b>Είδος Μηχανήματος</b></td><td bgcolor=#D3E2EA align="center"><b>Μοντέλο Μηχανήματος</b></td><td bgcolor=#D3E2EA align="center"><b>Αριθμός Παγίου</b></td><td bgcolor=#D3E2EA align="center"><b>Περιγραφή Μηχανήματος</b></td><td bgcolor=#D3E2EA align="center"><b>Επεξεργασία</b></td></tr>
+<?php //<th>Όνομα Υπολογιστή</th><th>Ονοματεπώνυμο χειριστή</th> ?>
+
+
+<?php
+$i=0;
+while ($row = mysql_fetch_assoc($ret)) {
+	$i+=1;
+    echo "<tr><td align='center'>$i</td><td align='center'>".$row['id'].
+	"</td><td align='center'>".$row['type']."</td><td align='center'>".$row['model']."</td><td align='center'>".$row['sn']."</td><td>".$row['eq_descr']."</td>".
+	"<td align='center'><input type='submit' name='sub_choice_2' value='Επεξεργασία' onclick='sub_choice($i)' /></td></tr>";	
+}
+
+echo "<input type='hidden' name='number_choice' id='final_choice' value='1' />";
+echo "<input type='hidden' name='total_choice' id='total_number_of_choices' value='$i' />";
+echo "<input type='hidden' name='criterion' id='criterion_choice' value='1' />";
+
+echo "</table>";
+echo "</form>";
+
+}
+
+} //end if (isset($_POST['check_all'])) 
+
+
+
+/*
+%%%%%%%%%
+%%     %% // EIDOS MHXANHMATOS
+%%%%%%%%%
+*/
+$temp_type=$_POST['type_eq'];
+if ($temp_type!='') {
+$q="select * from equipment.lis_equipment where grp='a1' and type='$temp_type'";
+$ret=mysql_query($q);
+
+if (!$ret) {
+    die('Invalid query: ' . mysql_error());
+}
+
+if (mysql_num_rows($ret) == 0) {
+	echo "Δεν υπάρχει καμία καταχώρηση προς το παρόν. Παρακαλώ πατήστε <a href='http://150.140.152.10/mylis/modules.php?name=card_PC_units&amp;op=card_create'>εδώ</a> για να δημιουργήσετε καινούρια κάρτα κατάστασης μονάδων Η/Υ (Α1)!";
+}
+
+else{
+?>
+<form style="display:inline" name="6.2-3_form_show" action="modules.php?name=card_PC_units&amp;op=card_edit" method="post" enctype="multipart/form-data">
+
+<table cols="6" border="2" cellspacing="1" cellpadding="10">
+
+<tr><td bgcolor=#D3E2EA align="center"><b>ΑΑ</b></td><td bgcolor=#D3E2EA align="center"><b>Κωδικός Μηχανήματος</b></td><td bgcolor=#D3E2EA align="center"><b>Είδος Μηχανήματος</b></td><td bgcolor=#D3E2EA align="center"><b>Μοντέλο Μηχανήματος</b></td><td bgcolor=#D3E2EA align="center"><b>Αριθμός Παγίου</b></td><td bgcolor=#D3E2EA align="center"><b>Περιγραφή Μηχανήματος</b></td><td bgcolor=#D3E2EA align="center"><b>Επεξεργασία</b></td></tr>
+<?php //<th>Όνομα Υπολογιστή</th><th>Ονοματεπώνυμο χειριστή</th> ?>
+
+
+<?php
+$i=0;
+while ($row = mysql_fetch_assoc($ret)) {
+	$i+=1;
+    echo "<tr><td align='center'>$i</td><td align='center'>".$row['id'].
+	"</td><td align='center'>".$row['type']."</td><td align='center'>".$row['model']."</td><td align='center'>".$row['sn']."</td><td>".$row['eq_descr']."</td>".
+	"<td align='center'><input type='submit' name='sub_choice_2' value='Επεξεργασία' onclick='sub_choice($i)' /></td></tr>";	
+}
+
+echo "<input type='hidden' name='number_choice' id='final_choice' value='1' />";
+echo "<input type='hidden' name='total_choice' id='total_number_of_choices' value='$i' />";
+echo "<input type='hidden' name='criterion' id='criterion_choice' value='2' />";
+echo "<input type='hidden' name='type' value='$temp_type' />";
+
+echo "</table>";
+echo "</form>";
+
+}
+} // end if ($temp_type!='')
+
+
+
+
+/*
+%%%%%%%%%
+%%     %% // KWDIKOS MHXANHMATOS
+%%%%%%%%%
+*/
+$temp_code=$_POST['code_eq'];
+if ($temp_code!='') {
+$q="select * from equipment.lis_equipment where grp='a1' and id='$temp_code'";
+$ret=mysql_query($q);
+
+if (!$ret) {
+    die('Invalid query: ' . mysql_error());
+}
+
+if (mysql_num_rows($ret) == 0) {
+	echo "Δεν υπάρχει καμία καταχώρηση προς το παρόν. Παρακαλώ πατήστε <a href='http://150.140.152.10/mylis/modules.php?name=card_PC_units&amp;op=card_create'>εδώ</a> για να δημιουργήσετε καινούρια κάρτα κατάστασης μονάδων Η/Υ (Α1)!";
+}
+
+else{
+?>
+<form style="display:inline" name="6.2-3_form_show" action="modules.php?name=card_PC_units&amp;op=card_edit" method="post" enctype="multipart/form-data">
+
+<table cols="6" border="2" cellspacing="1" cellpadding="10">
+
+<tr><td bgcolor=#D3E2EA align="center"><b>ΑΑ</b></td><td bgcolor=#D3E2EA align="center"><b>Κωδικός Μηχανήματος</b></td><td bgcolor=#D3E2EA align="center"><b>Είδος Μηχανήματος</b></td><td bgcolor=#D3E2EA align="center"><b>Μοντέλο Μηχανήματος</b></td><td bgcolor=#D3E2EA align="center"><b>Αριθμός Παγίου</b></td><td bgcolor=#D3E2EA align="center"><b>Περιγραφή Μηχανήματος</b></td><td bgcolor=#D3E2EA align="center"><b>Επεξεργασία</b></td></tr>
+<?php //<th>Όνομα Υπολογιστή</th><th>Ονοματεπώνυμο χειριστή</th> ?>
+
+
+<?php
+$i=0;
+while ($row = mysql_fetch_assoc($ret)) {
+	$i+=1;
+    echo "<tr><td align='center'>$i</td><td align='center'>".$row['id'].
+	"</td><td align='center'>".$row['type']."</td><td align='center'>".$row['model']."</td><td align='center'>".$row['sn']."</td><td>".$row['eq_descr']."</td>".
+	"<td align='center'><input type='submit' name='sub_choice_2' value='Επεξεργασία' onclick='sub_choice($i)' /></td></tr>";	
+}
+
+echo "<input type='hidden' name='number_choice' id='final_choice' value='1' />";
+echo "<input type='hidden' name='total_choice' id='total_number_of_choices' value='$i' />";
+echo "<input type='hidden' name='criterion' id='criterion_choice' value='3' />";
+echo "<input type='hidden' name='code' value='$temp_code' />";
+
+echo "</table>";
+echo "</form>";
+
+}
+} // end if ($temp_code!='')
+
+
+/*
+%%%%%%%%%
+%%     %% // YPALLHLOS / XEIRISTHS
+%%%%%%%%%
+*/
+
+/*
+$temp_user=$_POST['user_select'];
+if ($temp_user!='') {
+
+$user_names=explode (' ', $temp_user);
+$lname_user=strval($user_names['0']);
+$fname_user=strval($user_names['1']);
+
+$query_user="select id from library.lis_staff where lname='$lname_user' and fname='$fname_user'";
+$return_user=mysql_query($query_user);
+$row_user=mysql_fetch_assoc($return_user);
+$user_id=$row_user['id']; //epilegmeno id
+//echo "to id einai $user_id";
+
+
+//$dbname = 'operation_eq';
+//mysql_select_db($dbname);
+
+$q_1="select eq_id from equipment.operation_eq where staff_id='".$row_user['id']."'";
+echo "$q_1";
+$ret_1=mysql_query($q_1);
+$row_1=mysql_fetch_assoc($ret_1);
+
+$q="select * from equipment.lis_equipment where id='".$row_1['id']."'";
+echo "$q";
+$ret=mysql_query($q);
+$row=mysql_fetch_assoc($ret);
+
+if (!$ret) {
+    die('Invalid query: ' . mysql_error());
+}
+
+if (mysql_num_rows($ret) == 0) {
+	echo "Δεν υπάρχει καμία καταχώρηση προς το παρόν. Παρακαλώ πατήστε <a href='http://150.140.152.10/mylis/modules.php?name=card_PC_units&amp;op=card_create'>εδώ</a> για να δημιουργήσετε καινούρια κάρτα κατάστασης μονάδων Η/Υ (Α1)!";
+}
+
+else{
+*/
+?>
+
+<!--
+<form style="display:inline" name="6.2-3_form_show" action="modules.php?name=card_PC_units&amp;op=card_edit" method="post" enctype="multipart/form-data">
+
+<table cols="6" border="2" cellspacing="1" cellpadding="10">
+
+<tr><td bgcolor=#D3E2EA align="center"><b>ΑΑ</b></td><td bgcolor=#D3E2EA align="center"><b>Κωδικός Μηχανήματος</b></td><td bgcolor=#D3E2EA align="center"><b>Είδος Μηχανήματος</b></td><td bgcolor=#D3E2EA align="center"><b>Αριθμός Παγίου</b></td><td bgcolor=#D3E2EA align="center"><b>Περιγραφή Μηχανήματος</b></td><td bgcolor=#D3E2EA align="center"><b>Επεξεργασία</b></td></tr>
+-->
+
+<?php //<th>Όνομα Υπολογιστή</th><th>Ονοματεπώνυμο χειριστή</th> ?>
+
+
+<?php
+/*
+$i=0;
+while ($row = mysql_fetch_assoc($ret)) {
+	$i+=1;
+    echo "<tr><td align='center'>$i</td><td align='center'>".$row['id'].
+	"</td><td align='center'>".$row['type']."</td><td align='center'>".$row['sn']."</td><td>".$row['eq_descr']."</td>".
+	"<td align='center'><input type='submit' name='sub_choice_2' value='Επεξεργασία' onclick='sub_choice($i)' /></td></tr>";	
+}
+
+echo "<input type='hidden' name='number_choice' id='final_choice' value='1' />";
+echo "<input type='hidden' name='total_choice' id='total_number_of_choices' value='$i' />";
+echo "<input type='hidden' name='criterion' id='criterion_choice' value='4' />";
+echo "<input type='hidden' name='user_criterion' value='$temp_user' />";
+
+echo "</table>";
+echo "</form>";
+
+}
+
+
+
+
+
+} // end if ($temp_user!='')
+*/
+
+
+
+
+
+//PERIPTWSH OPOY DEN EPILEGOYME KANENA KRITHRIO
+if (!isset($_POST['check_all']) && $temp_type=='' && $temp_code=='' && $temp_user=='') {
+echo "Δεν έχετε επιλέξει κανένα κριτήριο!<br/><br/>Θα πρέπει να επιλέξετε μόνο ένα κριτήριο για να δείτε τις επιθυμητές συσκευές!";
+echo "<br/><br/>Παρακαλώ πατήστε <a href='http://150.140.152.10/mylis/modules.php?name=card_PC_units&amp;op=card_show'>εδώ</a> για να επιστρέψετε πίσω.";
+}
+
+
+} //end if (array_key_exists('submit_show' , $_POST))
+
+} //END OF FUNCTION 3
+
+?>
+
+
+
+
+
+<?php
+
+/////////////////////////////////////
+//					// epilogi kapoias kartas mixanimatos
+//		FUNCTION 4 		//
+//					//
+/////////////////////////////////////
+
+function card_edit($db2,$db_select,$module_name,$sectname,$usersection,$managesection)
+{
+
+$dbname = 'equipment';
+mysql_select_db($dbname);
+
+$testt=$_POST['total_choice'];
+$tmp=$_POST['number_choice'];
+
+if (!$_POST['update_check']) {
+
+
+//SOS : AKOLOY8OYN ELEGXOI GIA TO POTE EXW EPILEXEI 'OLA', 'KWDIKO', 'TYPO' MHXANHMATOS
+//PERIPTWSH 1==EPILOGH OLWN
+if ($_POST['criterion']=='1') {
+
+	$q2="select id from equipment.lis_equipment where grp='a1' limit $tmp";
+} // end if ($_POST['criterion']=='1')
+
+
+//PERIPTWSH 2==EPILOGH EIDOYS MHXANHMATOS
+if ($_POST['criterion']=='2') {
+
+	$q2="select id from equipment.lis_equipment where grp='a1' and type='".$_POST['type']."' order by id limit $tmp";
+} // end if ($_POST['criterion']=='2')
+
+
+//PERIPTWSH 3==EPILOGH KWDIKOY MHXANHMATOS
+if ($_POST['criterion']=='3') {
+
+	$q2="select id from equipment.lis_equipment where grp='a1' and id='".$_POST['code']."' limit $tmp";
+} // end if ($_POST['criterion']=='3')
+
+
+//PERIPTWSH 4==EPILOGH XEIRISTH / YPALLHLOY
+if ($_POST['criterion']=='4') {
+
+	$q2="select id from equipment.lis_equipment where grp='a1' and id='".$_POST['user_criterion']."' limit $tmp";
+} // end if ($_POST['criterion']=='3')
+
+
+	$ret2=mysql_query($q2);
+	
+	if (!$ret2) {
+		die('Invalid query: ' . mysql_error());
+	}
+	
+	if (mysql_num_rows($ret2) == 0) {
+		echo "No rows found, nothing to print so am NOT exiting<br />";
+		echo "Δεν υπάρχει καμία καταχώρηση προς το παρόν. Παρακαλώ πατήστε <a href='http://150.140.152.10/mylis/modules.php?name=card_PC_units&amp;op=card_create'>εδώ</a> για να δημιουργήσετε καινούρια κάρτα κατάστασης μονάδων ΗΥ (Α1)!!";
+	}
+	
+	else if (mysql_num_rows($ret2) != 0){
+	//elegxos gia tin antistoixia toy koumpiou pou pati8ike me to antistoixo id pou iparxei sti basi
+$grammi=0;
+while ($row2=mysql_fetch_assoc($ret2)) {
+$grammi++;
+$finale[$grammi]=$row2['id'];
+}//telos to while
+
+$qid=$finale[$grammi];
+
+$q3="select * from equipment.lis_equipment where id='".$finale[$grammi]."'";
+
+$ret3=mysql_query($q3);
+
+if (!$ret3) {
+		die('Invalid query: ' . mysql_error());
+}
+
+if (mysql_num_rows($ret3) == 0) {
+		echo "Δεν υπάρχει καμία καταχώρηση προς το παρόν. Παρακαλώ πατήστε <a href='http://150.140.152.10/mylis/modules.php?name=card_PC_units&amp;op=card_create'>εδώ</a> για να δημιουργήσετε καινούρια κάρτα κατάστασης μονάδων ΗΥ (Α1)!";
+	}
+	//dimiourgia pinaka me tis times pou iparxoun idi sti vasi
+	else if (mysql_num_rows($ret3) != 0){//######################################################
+	$row3=mysql_fetch_assoc($ret3);
+?>
+
+
+
+<form style='display:inline' name='6.2-3_form_edit' action="modules.php?name=card_PC_units&amp;op=card_edit" method="post" enctype="multipart/form-data">
+
+<table cols="2" border="2" cellspacing="1" cellpadding="5">
+
+<tr><td bgcolor=#D3E2EA align="center" colspan="2"><b>Στοιχεία Εξοπλισμού Μηχανήματος <?php echo '"'."$qid".'"'; ?></b></td></tr>
+
+<tr><td bgcolor=#D3E2EA><b><label for="kind">Είδος Μονάδας</label></b></td>
+
+<?php 
+
+$backup_status='unselected';
+$pc_status='unselected';
+$server_status='unselected';
+$storage_status='unselected';
+
+switch ($row3['type']) {
+
+case "Backup":
+$backup_status='selected';
+break;
+
+case "PC":
+$pc_status='selected';
+break;
+
+case "Server":
+$server_status='selected';
+break;
+
+case "Storage":
+$storage_status='selected';
+break;
+}
+
+?>
+
+<td><select name="kind_equipment_select" method="post">
+<option <?php echo $backup_status; ?>>Backup</option>
+<option <?php echo $pc_status; ?>>PC</option>
+<option <?php echo $server_status; ?>>Server</option>
+<option <?php echo $storage_status; ?>>Storage</option>
+</select></td></tr>
+
+<tr><td bgcolor=#D3E2EA><b><label for="code">Κωδικός Μηχανήματος <br /> (Σειριακός Αριθμός, SN)</label></b></td>
+<td><input type="text" name="code_txt" size="90" value="<?php echo $row3['id']; ?>" /></td></tr>
+
+<tr><td bgcolor=#D3E2EA><b><label for="sn">Αριθμός Παγίου</label></b></td>
+<td><input type="text" name="sn_txt" size="90" value="<?php echo $row3['sn']; ?> " /></td></tr>
+
+<tr><td bgcolor=#D3E2EA><b><label for="model">Μοντέλο</label></b></td>
+<td><input type="text" name="model_txt" size="90" value="<?php echo $row3['model']; ?> " /></td></tr>
+
+<tr><td bgcolor=#D3E2EA><b><label for="descr">Περιγραφή Μηχανήματος</label></b></td>
+<td><textarea name="descr_txt" rows="4" cols="85" wrap="soft"><?php echo $row3['eq_descr']; ?></textarea></td></tr>
+
+<tr><td bgcolor=#D3E2EA><b><label for="supplier">Προμηθευτής</label></b></td>
+<td><select name="supplier_select" method="post">
+<option></option>
+<?php
+//emfanisi tou supplier pou antistoixei stin epilogi pou kaname, simfwna me ti Basi Dedomenwn
+
+$dbname = 'supplies';
+mysql_select_db($dbname);
+
+$query4="select supplier_id,supplier_name from supplies.supplier order by supplier_name";
+$return4=mysql_query($query4);
+
+$count4=mysql_num_rows($return4);
+
+while ($count4>0) {
+$count4--;
+$row4=mysql_fetch_assoc($return4);
+if ($row4["supplier_id"] != $row3["supplier_id"])
+	{
+	echo "<option>".$row4["supplier_name"]."</option>";
+	}
+if ($row4["supplier_id"] == $row3["supplier_id"])
+	{
+	echo "<option selected>".$row4["supplier_name"]."</option>";
+	}
+}
+
+// mysql_free_result($return4);
+// mysql_close($dbname);
+
+?>
+</select>
+</td></tr>
+
+<?php
+//emfanisi tis imerominias agoras exoplismou pou antistoixei stin epilogi pou kaname, simfwna me ti Basi Dedomenwn
+$query5="select date_purch from equipment.lis_equipment where id='".$finale[$grammi]."'";
+$return5=mysql_query($query5);
+$row5=mysql_fetch_assoc($return5);
+?>
+
+<tr><td bgcolor=#D3E2EA><b><label for="date_purch">Ημερομηνία Αγοράς<br />(ΗΗ / ΜΜ / ΕΕΕΕ)</label></b></td>
+<td><table cols="4" border="0">
+<td><select name="purch_day" method="post">
+
+<?php
+$date="'".$row5['date_purch']."'";
+$date_part=explode ("-", $date);
+$day_part=intval($date_part['2']);
+echo "<option> </option>";
+
+if ($row5['date_purch'] == '0000-00-00' or $day_part=='00') 
+{
+for ($i=1;$i<32;$i++)
+{ 
+echo "<option>".$i."</option>"; 
+}
+}//end first if
+
+else if ($row5['date_purch'] != '0000-00-00' and $day_part != '')
+{
+for ($i=1;$i<$day_part;$i++)
+{
+echo "<option>".$i."</option>";
+}
+echo "<option selected>".$day_part."</option>";
+for ($i=($day_part+1);$i<32;$i++)
+{
+echo "<option>".$i."</option>";
+}
+}//end 2nd if
+?>
+</select></td>
+
+<td>/</td>
+
+<td><select name="purch_month" method="post">
+
+<?php
+$date="'".$row5['date_purch']."'";
+$date_part=explode ("-", $date);
+$month_part=intval($date_part['1']);
+
+echo "<option> </option>";
+
+if ($row5['date_purch'] == '0000-00-00' or $month_part=='00') 
+{
+for ($i=1;$i<13;$i++)
+{ 
+echo "<option>".$i."</option>"; 
+}
+}//end first if
+
+else if ($row5['date_purch'] != '0000-00-00')
+{
+for ($i=1;$i<$month_part;$i++)
+{
+echo "<option>".$i."</option>";
+}
+echo "<option selected>".$month_part."</option>";
+for ($i=($month_part+1);$i<13;$i++)
+{
+echo "<option>".$i."</option>";
+}
+}//end 2nd if
+?>
+</select></td>
+
+<td>/</td>
+
+<td><select name="purch_year" method="post">
+
+<?php
+$current_cyear = getdate();
+$cyear = $current_cyear['year'];
+
+$datey=$row5['date_purch'];
+$datepart=explode ("-", $datey);
+$yearpart=intval($datepart['0']);
+echo "<option> </option>";
+
+if ($row5['date_purch'] == '0000-00-00' or $yearpart=='0000') 
+{
+//for ($i=1990;$i<($cyear+1);$i++)
+for ($i=$cyear;$i>1989;$i--)
+{ 
+echo "<option>".$i."</option>"; 
+}
+}//end first if
+
+
+else if ($row5['date_purch'] != '0000-00-00')
+{
+//for ($i=1990;$i<$yearpart;$i++)
+for ($i=$cyear;$i>$yearpart;$i--)
+{
+echo "<option>".$i."</option>";
+}
+echo "<option selected>".$yearpart."</option>";
+//for ($i=($yearpart+1);$i<($cyear+1);$i++)
+for ($i=($yearpart-1);$i>1989;$i--)
+{
+echo "<option>".$i."</option>";
+}
+}//end 2nd if
+
+?>
+</select></td>
+</table></td></tr>
+
+<tr><td bgcolor=#D3E2EA><b><label for="invoice">Αριθμός Τιμολογίου</label></b></td>
+<td><input type="text" name="invoice_txt" value="<?php echo $row3['invoice']; ?>"/></td></tr>
+
+<tr><td bgcolor=#D3E2EA><b><label for="guarranty">Περίοδος Εγγύησης <br />(# Μηνών)</label></b></td>
+<td><input type="text" name="guarranty_txt" value="<?php echo $row3['guarranty_dur']; ?>"/></td></tr>
+
+<tr><td bgcolor=#D3E2EA align="center" colspan="2"><b>Βασικά Αρχικά Χαρακτηριστικά Μονάδας</b></td></tr>
+
+<tr><td bgcolor=#D3E2EA><b><label for="os">Λειτουργικό Σύστημα</label></b></td>
+<td><input type="text" name="os_txt" size="90" value="<?php echo $row3['op_sys']; ?>"/></td></tr>
+
+<tr><td bgcolor=#D3E2EA><b><label for="processor">Επεξεργαστές</label></b></td>
+<td><input type="text" name="processor_txt" size="90" value="<?php echo $row3['processor']; ?>"/></td></tr>
+
+<tr><td bgcolor=#D3E2EA><b><label for="memory">Μνήμη</label></b></td>
+<td><input type="text" name="memory_txt" size="90" value="<?php echo $row3['memory']; ?>"/></td></tr>
+
+<tr><td bgcolor=#D3E2EA><b><label for="card">Κάρτες</label></b></td>
+<td><input type="text" name="card_txt" size="90" value="<?php echo $row3['card']; ?>"/></td></tr>
+
+<tr><td bgcolor=#D3E2EA><b><label for="other">'Αλλο</label></b></td>
+<td><input type="text" name="other_txt" size="90" value="<?php echo $row3['eq_other']; ?>"/></td></tr>
+
+
+</table>
+
+<br />
+	<input type='hidden' name='hide_id' value='<?php echo $qid; ?> '> 
+	<input type='submit' name='update_check' value='Ενημέρωση' />
+	<input type='reset' name='res' value='Επαναφορά' />
+    <input type='button' name='button_delete' value='Διαγραφή' onclick='alert("Αυτή η λειτουργία είναι απενεργοποιημένη. Σε περίπτωση που επιθυμείτε τη διαγραφή, ενημερώστε το Τμήμα Μηχανοργάνωσης, Έρευνας & Ανάπτυξης.");' />
+	<input type='hidden' name='_3_update_check' value='1'/>
+	</form>
+
+<?php
+}//######################################################
+
+}//telos to else if
+
+?>
+ 
+</table>
+
+
+<hr />
+<form style='display:inline' name='6.2-3_form_create_stoixeia' action="modules.php?name=card_PC_units&amp;op=create_stoixeia" method="post" enctype="multipart/form-data">
+<input type='hidden' name='hide_id_checked' value='<?php echo $row3['id']; ?>' >
+<input type="submit" name="create_stoixeia" value="Δημιουργία Στοιχείων Λειτουργίας Μονάδων ΗΥ (Α1)"  />
+</form>
+
+<br />
+<form style='display:inline' name='6.2-3_form_edit_stoixeia' action="modules.php?name=card_PC_units&amp;op=edit_stoixeia" method="post" enctype="multipart/form-data">
+<input type='hidden' name='hide_id_checked_2' value='<?php echo $row3['id']; ?>' >
+<input type="submit" name="edit_stoixeia" value="Προβολή Στοιχείων Λειτουργίας Μονάδων ΗΥ (Α1)"  />
+</form>
+
+<br />
+<form style='display:inline' name='6.2-3_form_create_malfunction' action="modules.php?name=card_PC_units&amp;op=create_malfunction" method="post" enctype="multipart/form-data">
+<input type='hidden' name='hide_id_checked_3' value='<?php echo $row3['id']; ?>' >
+<input type="submit" name="create_malfunction_id" value="Δημιουργία Στοιχείων Βλάβης/ Συντήρησης/ Αναβάθμισης Μονάδων ΗΥ (Α1)"  />
+</form>
+
+<br />
+<form style='display:inline' name='6.2-3_form_edit_malfunction' action="modules.php?name=card_PC_units&amp;op=edit_malfunction" method="post" enctype="multipart/form-data">
+<input type='hidden' name='hide_id_checked_4' value='<?php echo $row3['id']; ?>' >
+<input type="submit" name="edit_malfunction_id" value="Προβολή Στοιχείων Βλάβης/ Συντήρησης/ Αναβάθμισης Μονάδων ΗΥ (Α1)"  />
+</form>
+
+   
+<?php
+		
+}// end if (!$_POST['update_check'])
+
+
+//DIADIKASIA ENHMERWSHS THS BASHS
+if ($_POST['update_check']) {
+
+//mera
+if ($_POST['purch_day']=='') { $enter_day='00'; }
+else if ($_POST['purch_day']!='') { $enter_day=$_POST['purch_day']; }
+//minas
+if ($_POST['purch_month']=='') { $enter_month='00'; }
+else if ($_POST['purch_month']!='') { $enter_month=$_POST['purch_month']; }
+//etos
+if ($_POST['purch_year']=='') { $enter_year='0000'; }
+else if ($_POST['purch_year']!='') { $enter_year=$_POST['purch_year']; }
+//teliki morfi ananewmenis imerominias
+$updated_date=$enter_year.'-'.$enter_month.'-'.$enter_day;
+
+if ($_POST['supplier_select'] != '')
+{
+$qsup="select supplier_id from supplies.supplier where supplier_name='".$_POST['supplier_select']."' limit 1";
+$returnsup=mysql_query($qsup);
+$rowsup=mysql_fetch_assoc($returnsup);
+$temp=0;
+$sup_id[$temp]=$rowsup['supplier_id'];
+}
+else if ($_POST['supplier_select'] == '')
+{
+$sup_id[$temp]=-1;
+}
+
+
+	$q6="update equipment.lis_equipment set id='".$_POST['code_txt']."', sn='".$_POST['sn_txt'].
+	"', type='".$_POST['kind_equipment_select']."', model='".$_POST['model_txt']."', eq_descr='".$_POST['descr_txt'].
+	"', op_sys='".$_POST['os_txt']."', processor='".$_POST['processor_txt']."', memory='".$_POST['memory_txt'].
+	"', card='".$_POST['card_txt']."', eq_other='".$_POST['other_txt']."', guarranty_dur='".$_POST['guarranty_txt'].
+	"', date_purch='".$updated_date."', invoice='".$_POST['invoice_txt']."', supplier_id='".$sup_id[$temp].
+	"' where id='".$_POST['hide_id']."' limit 1";
+	
+	echo "Η ενημέρωση της εγγραφής έγινε επιτυχώς!<br/><br/>";
+	echo "Κάντε κλικ <a href='http://150.140.152.10/mylis/modules.php?name=card_PC_units&amp;op=card_show'>εδώ</a> για να επιλέξετε μία εγγραφή.";
+	$ret6=mysql_query($q6);
+
+} // end if ($_POST['update_check'])
+
+
+} //END OF FUNCTION 4
+?>
+
+
+
+
+
+<?php
+
+/////////////////////////////////////
+//					// dimiourgia stoixeiwn leitourgias mixanimatwn
+//		FUNCTION 5 		//
+//					//
+/////////////////////////////////////
+
+function create_stoixeia($db2,$db_select,$module_name,$sectname,$usersection,$managesection)
+{
+
+function daymonth($number)
+{
+for ($i=1;$i<$number;$i++) { echo "<option> $i </option>"; }
+}
+
+if (!array_key_exists('operation_create', $_POST)) {
+
+?>
+
+<br />
+
+<form style="display:inline" name="6-2-3_form_operation" action="modules.php?name=card_PC_units&amp;op=create_stoixeia" method="post" enctype="multipart/form-data">
+
+<table cols="4" border="2" cellspacing="1" cellpadding="2">
+
+<tr><td align="center" bgcolor=#D3E2EA colspan="4"><b>Στοιχεία Λειτουργίας Μηχανήματος 
+<?php 
+if (array_key_exists('hide_id_checked', $_POST)) {
+	echo '"'.$_POST['hide_id_checked'].'"'; }
+else if (array_key_exists('operation_create_2', $_POST)) {
+	echo '"'.$_POST['code_id_2'].'"'; } 
+?></b></td></tr>
+
+<tr><td bgcolor=#D3E2EA colspan="2"><b><label for="from">Από <br />(ΗΗ / ΜΜ / ΕΕΕΕ)</label></b></td>
+<td colspan="2">
+<table cols="5" border="0">
+<td><select name="from_day" method="post">
+<option></option>
+<?php 
+$current = getdate();
+$day = $current['mday'];
+daymonth($day);
+?>
+<option selected><?php echo $day; ?></option>
+<?php
+for ($i=$day+1;$i<32;$i++)
+{
+echo "<option>$i</option>";
+}
+?>
+</select></td>
+
+<td>/</td>
+
+<td><select name="from_month" method="post">
+<option></option>
+<?php 
+$current = getdate();
+$month = $current['mon'];
+daymonth($month);
+?>
+<option selected><?php echo $month; ?></option>
+<?php
+for ($i=$month+1;$i<13;$i++)
+{
+echo "<option>$i</option>";
+}
+?>
+</select></td>
+
+<td>/</td>
+
+<td><select name="from_year" method="post">
+<option></option>
+<?php 
+$current = getdate(); $year = $current['year'];
+echo "<option selected> $year </option>"; 
+for ($i=($year-1);$i>1999;$i--) { echo "<option> $i </option>"; }
+?>
+</select></td>
+</table></td></tr>
+
+<tr><td bgcolor=#D3E2EA colspan="2"><b><label for="till">Έως <br />(ΗΗ / ΜΜ / ΕΕΕΕ)</label></b></td>
+<td colspan="2">
+<table cols="5" border="0">
+<td><select name="till_day" method="post">
+<option></option>
+<?php 
+$current = getdate();
+$day = $current['mday'];
+daymonth($day);
+?>
+<option selected><?php echo $day; ?></option>
+<?php
+for ($i=$day+1;$i<32;$i++)
+{
+echo "<option>$i</option>";
+}
+?>
+</select></td>
+<td>/</td>
+<td><select name="till_month" method="post">
+<option></option>
+<?php 
+$current = getdate();
+$month = $current['mon'];
+daymonth($month);
+?>
+<option selected><?php echo $month; ?></option>
+<?php
+for ($i=$month+1;$i<13;$i++)
+{
+echo "<option>$i</option>";
+}
+?>
+</select></td>
+<td>/</td>
+<td><select name="till_year" method="post">
+<option></option>
+<?php 
+$current = getdate(); $year = $current['year'];
+echo "<option selected> $year </option>"; 
+for ($i=($year-1);$i>1999;$i--) { echo "<option> $i </option>"; }
+?>
+</select></td>
+</table></td></tr>
+
+<tr><td bgcolor=#D3E2EA colspan="2"><b><label for="use_">Χρήση</label></b></td>
+<td colspan="2"><select name="use_select" method="post">
+<option></option>
+<option>Προσωπικό</option>
+<option>Χρήστες</option>
+<option>Απόσυρση</option>
+</select></td></tr>
+
+<tr><td bgcolor=#D3E2EA rowspan="4" width="30%"><b><label for="thesis">Θέση <br />Εργασίας</label></b></td>
+<td bgcolor=#D3E2EA><b><label for="name">Όνομα Μηχανήματος</label></b></td>
+<td colspan="2"><input type="text" name="name_txt" /> </td></tr>
+
+<tr><td bgcolor=#D3E2EA><b><label for="ip">I.P.</label></b></td>
+<td colspan="2"><input type="text" name="ip_txt" /> </td></tr>
+
+<tr><td bgcolor=#D3E2EA><b><label for="floor">Όροφος</label></b></td>
+<td colspan="2"><select name="floor_select" method="post">
+<option></option>
+<option>Ισόγειο</option>
+<option>Πρώτος</option>
+<option>Δεύτερος</option>
+<option>Τρίτος</option>
+</select></td></tr>
+
+<tr><td bgcolor=#D3E2EA><b><label for="department">Τμήμα</label></b></td>
+<td colspan="2"><select name="department_select" method="post">
+<option></option>
+<?php
+
+$dbname = 'library';
+mysql_select_db($dbname);
+
+$query1="select id,title_el from library.lis_staff_sections order by title_el";
+$return1=mysql_query($query1);
+
+$count=mysql_num_rows($return1);
+
+while ($count>0) {
+$count--;
+$row1=mysql_fetch_assoc($return1);
+echo "<option>".$row1["title_el"]."</option>";
+}
+
+ //mysql_free_result($return1);
+ //mysql_close($dbname);
+
+?>
+</select></td></tr>
+
+<tr><td bgcolor=#D3E2EA colspan="2"><b><label for="net">Δίκτυο</label></b></td>
+<td colspan="2"><input type="text" name="net_txt" /></td></tr>
+
+<tr><td bgcolor=#D3E2EA colspan="2"><b><label for="subnet">Υποδίκτυο</label></b></td>
+<td colspan="2"><input type="text" name="subnet_txt" /></td></tr>
+
+<tr><td bgcolor=#D3E2EA colspan="2"><b><label for="user">Χειριστής</label></b></td>
+<td colspan="2"><select name="user_select" method="post">
+<option></option>
+<?php
+
+$dbname = 'library';
+mysql_select_db($dbname);
+
+$query2="select id,fname,lname from library.lis_staff order by lname";
+$return2=mysql_query($query2);
+
+$count2=mysql_num_rows($return2);
+
+while ($count2>0) {
+$count2--;
+$row2=mysql_fetch_assoc($return2);
+if ($row2["lname"]!='-' and $row2["fname"]!='-'){
+echo "<option>".$row2["lname"]." ".$row2["fname"]."</option>";
+}
+}
+
+ //mysql_free_result($return2);
+ //mysql_close($dbname);
+
+?>
+</select></td></tr>
+</table>
+<br />
+<input type="hidden" name="create_code_id" value='<?php echo $_POST['hide_id_checked'] ?>' />
+<input type="hidden" name="code_id_2_test" value='<?php echo $_POST['code_id_2'] ?>' />
+<input type="submit" value="Δημιουργία" name="operation_create"  />
+<input type="reset" value="Εκκαθάριση"  />
+</form>
+
+<?php
+
+} // END if (!array_key_exists('operation_create', $_POST))
+
+
+
+
+if (array_key_exists('operation_create', $_POST)) {
+
+//AKOLOY8OYN OI ANA8ESEIS TWN ENDIAMESWN METABLHTWN PROKEIMENOY NA DIAXEIRISTOYME TO INSERTION STH BASH
+
+//Stoixeia Leitourgias
+
+if ($_POST['from_day'] !='') { $tmp1_1=$_POST['from_day']; } else { $tmp1_1=00; }
+if ($_POST['from_month'] !='') { $tmp1_2=$_POST['from_month']; } else { $tmp1_2=00; }
+if ($_POST['from_year'] !='') { $tmp1_3=$_POST['from_year']; } else { $tmp1_3=0000; }
+$tmp1=$tmp1_3."-".$tmp1_2."-".$tmp1_1;
+
+if ($_POST['till_day'] !='') { $tmp2_1=$_POST['till_day']; } else { $tmp2_1=00; }
+if ($_POST['till_month'] !='') { $tmp2_2=$_POST['till_month']; } else { $tmp2_2=00; }
+if ($_POST['till_year'] !='') { $tmp2_3=$_POST['till_year']; } else { $tmp2_3=0000; }
+$tmp2=$tmp2_3."-".$tmp2_2."-".$tmp2_1;
+
+if ($_POST['use_select']!='') { $tmp3=$_POST['use_select']; } else { $tmp3='-'; }
+
+if ($_POST['name_txt']!='') { $tmp4=$_POST['name_txt']; } else { $tmp4='-'; }
+
+if ($_POST['floor_select']!='') { $tmp5=$_POST['floor_select']; } else { $tmp5='-'; }
+
+if ($_POST['department_select']!='') { 
+$tmp6=$_POST['department_select']; 
+$query_dep="select id from library.lis_staff_sections where title_el='".$tmp6."' limit 1";
+$ret_dep=mysql_query($query_dep);
+$count_dep=mysql_num_rows($ret_dep);
+while ($count_dep>0) {
+$count_dep--;
+$row_dep=mysql_fetch_assoc($ret_dep);
+}
+$current_department_id=$row_dep['id'];
+}
+else { $tmp6=''; $current_department_id=-1; }
+
+
+if ($_POST['net_txt']!='') { $tmp7=$_POST['net_txt']; } else { $tmp7='-'; }
+
+if ($_POST['subnet_txt']!='') { $tmp8=$_POST['subnet_txt']; } else { $tmp8='-'; }
+
+
+//diaxeirisi toy onomatos xristi pou epilegoume
+if ($_POST['user_select']!='') {
+$u=$_POST['user_select'];
+$u_part=explode (" ", $u);
+$lname_part=$u_part['0'];
+$fname_part=$u_part['1'];
+$query_user="select id from library.lis_staff where lname='".$lname_part."' and fname='".$fname_part."' limit 1";
+$ret_user=mysql_query($query_user);
+$count_user=mysql_num_rows($ret_user);
+while ($count_user>0) {
+$count_user--;
+$row_user=mysql_fetch_assoc($ret_user);
+}
+$current_user_id=$row_user['id'];
+}
+else { $current_user_id=-1; }
+
+if ($_POST['ip_txt']!='') { $tmp10=$_POST['ip_txt']; } else { $tmp10='-'; }
+
+//euresi tou swstou id //KALH ME8ODOS GIA TO POIA FORMA KALEI POIA ALLH, POIA KOYMPIA PATIOYNTAI KAI GENIKOTERA NA GINETAI SWSTOS ELEGXOS 
+if ($_POST['create_code_id']!='') {
+$equipment_id=$_POST['create_code_id']; }
+else if ($_POST['code_id_2_test']!='') {
+$equipment_id=$_POST['code_id_2_test']; }
+
+
+
+
+//Eisagwgi twn stoixeiwn tis formas sti basi
+
+
+//ELEGXOS GIA TO EAN H BASH EINAI KENH APO KATAXWRHSEIS 'H OXI
+$query_zero_db="select * from equipment.operation_eq";
+$return_zero_db=mysql_query($query_zero_db);
+$count_zero_db=mysql_num_rows($return_zero_db);
+
+
+//PERIPTWSH 1
+//ean i basi einai keni, vazw to operation_id xeirwnaktika iso me ENA
+if ($count_zero_db==0) 
+{ 
+$row_zero_db=mysql_fetch_array($return_zero_db);
+$oper_id=1;
+$query_oper="insert into equipment.operation_eq (grp,operation_id,eq_id,work_from,work_till,use_eq,name,floor_eq,staff_section_id,net,subnet,staff_id,ip)".
+" values ".
+"('a1', '$oper_id', '$equipment_id', '$tmp1', '$tmp2', '$tmp3', '$tmp4', '$tmp5', '$current_department_id', ".
+"'$tmp7', '$tmp8', '$current_user_id', '$tmp10')";
+}
+
+
+//PERIPTWSH 2
+//Ean i vasi DEN einai keni, den asxoloume me to operation_id dioti exei dilw8ei ws auto-increment sti vasi
+if ($count_zero_db!=0)
+{
+$query_oper="insert into equipment.operation_eq (grp,eq_id,work_from,work_till,use_eq,name,floor_eq,staff_section_id,net,subnet,staff_id,ip)".
+" values ".
+"('a1', '$equipment_id', '$tmp1', '$tmp2', '$tmp3', '$tmp4', '$tmp5', '$current_department_id', ".
+"'$tmp7', '$tmp8', '$current_user_id', '$tmp10')";
+}
+
+//εδω τελειωνει η αλλαγη
+
+
+$ret_oper=mysql_query($query_oper);
+//echo "<hr />";
+echo "Τα στοιχεία Λειτουργίας για το Μηχάνημα $equipment_id καταχωρήθηκαν επιτυχώς! <br/><br/>"; 
+?>
+<form style="display:inline" name="6-2-3_show_list" action="modules.php?name=card_PC_units&amp;op=card_show" method="post" enctype="multipart/form-data">
+<input type="submit" value="Προβολή μηχανημάτων" name="show_list"  />
+</form>
+<?php
+} // end if (array_key_exists('operation_create', $_POST))
+
+
+} //END OF FUNCTION 5
+
+?>
+
+
+
+<?php
+
+/////////////////////////////////////
+//					// provoli stoixeiwn leitourgias monadwn
+//		FUNCTION 6 		//
+//					//
+/////////////////////////////////////
+
+function edit_stoixeia($db2,$db_select,$module_name,$sectname,$usersection,$managesection)
+{
+
+$dbname = 'equipment';
+mysql_select_db($dbname);
+
+//elegxos gia swsti apotipwsi twn apotelesmatwn
+$test_flag=0;
+
+$query1="select * from equipment.operation_eq where eq_id='".$_POST['hide_id_checked_2']."' and grp='a1' order by operation_id desc";
+$return1=mysql_query($query1);
+$count1=mysql_num_rows($return1);
+
+//if ($count1 != 0) //douleyei
+while ($count1!=0)
+{
+$count1--;
+//sos stis allages
+
+$gg=0;
+while ($row1=mysql_fetch_assoc($return1))
+{
+$gg++;
+
+//dokimi1 PROSOXH !!!
+if (!array_key_exists('operation_create_edit', $_POST)) {
+//echo "den exei pati8ei to koympi tis enimerwsis"; 
+
+?>
+<form style="display:inline" name="6-2-3_edit_stoixeia" action="modules.php?name=card_PC_units&amp;op=edit_stoixeia" method="post" enctype="multipart/form-data">
+<table cols="4" border="2" cellspacing="1" cellpadding="2">
+
+<tr><td><table cols="2" border="0"><td bgcolor=#D3E2EA><b><label for="aa">ΑΑ:</label></b></td><td bgcolor=#D3E2EA><b><?php echo $gg; ?></b></td></table></td>
+<td align="center" bgcolor=#D3E2EA colspan="3"><b>Στοιχεία Λειτουργίας Μηχανήματος <?php echo '"'.$_POST['hide_id_checked_2'].'"'; ?></b></td></tr>
+
+<tr><td bgcolor=#D3E2EA colspan="2"><b><label for="from">Από <br />(ΗΗ / ΜΜ / ΕΕΕΕ)</label></b></td>
+<td colspan="2">
+<table cols="5" border="0">
+<td><select name="from_day" method="post">
+<option></option>
+<?php 
+//imera
+$date=$row1['work_from'];
+$date_part=explode ("-", $date);
+$day_part=intval($date_part['2']);
+
+for ($i=1;$i<$day_part;$i++)
+{
+echo "<option>".$i."</option>";
+}
+if ($day_part!=0)
+{
+echo "<option selected>".$day_part."</option>";
+}
+for ($i=$day_part+1;$i<32;$i++)
+{
+echo "<option>".$i."</option>";
+}
+?>
+</select></td>
+
+<td>/</td>
+
+<td><select name="from_month" method="post">
+<option></option>
+<?php 
+//minas
+$month_part=intval($date_part['1']);
+
+for ($i=1;$i<$month_part;$i++)
+{
+echo "<option>$i</option>";
+}
+if ($month_part!=0)
+{
+echo "<option selected>".$month_part."</option>";
+}
+for ($i=$month_part+1;$i<13;$i++)
+{
+echo "<option>".$i."</option>";
+}
+?>
+</select></td>
+
+<td>/</td>
+
+<td><select name="from_year" method="post">
+<option></option>
+<?php 
+//xronos
+$current = getdate();
+$cyear = $current['year'];
+$year_part=intval($date_part['0']);
+
+if ($row1['work_from']=='0000-00-00' or $year_part=='0000') 
+{
+//for ($i=1990;$i<($cyear+1);$i++)
+for ($i=$cyear;$i>1989;$i--)
+{ 
+echo "<option>$i</option>"; 
+}
+}//end first if
+
+else if ($row1['work_from'] != '0000-00-00' and $year_part!='0000')
+{
+//for ($i=1990;$i<$year_part;$i++)
+for ($i=$cyear;$i>$year_part;$i--)
+{
+echo "<option>".$i."</option>";
+}
+echo "<option selected>".$year_part."</option>";
+//for ($i=($year_part+1);$i<($cyear+1);$i++)
+for ($i=($year_part-1);$i>1989;$i--)
+{
+echo "<option>".$i."</option>";
+}
+}//end 2nd if
+
+?></select></td>
+</table></td></tr>
+
+<tr><td bgcolor=#D3E2EA colspan="2"><b><label for="till">Έως <br />(ΗΗ / ΜΜ / ΕΕΕΕ)</label></b></td>
+<td colspan="2">
+<table cols="5" border="0">
+<td><select name="till_day" method="post">
+<option></option>
+
+<?php
+//imera
+$date_till=$row1['work_till'];
+$date_part_till=explode ("-", $date_till);
+$day_part_till=intval($date_part_till['2']);
+
+for ($i=1;$i<$day_part_till;$i++)
+{
+echo "<option>".$i."</option>";
+}
+if ($day_part_till!=0)
+{
+echo "<option selected>".$day_part_till."</option>";
+}
+for ($i=$day_part_till+1;$i<32;$i++)
+{
+echo "<option>".$i."</option>";
+}
+?>
+</select></td>
+
+<td>/</td>
+
+<td><select name="till_month" method="post">
+<option></option>
+<?php 
+//minas
+$month_part_till=intval($date_part_till['1']);
+
+for ($i=1;$i<$month_part_till;$i++)
+{
+echo "<option>$i</option>";
+}
+if ($month_part_till!=0)
+{
+echo "<option selected>".$month_part_till."</option>";
+}
+for ($i=$month_part_till+1;$i<13;$i++)
+{
+echo "<option>".$i."</option>";
+}
+?>
+</select></td>
+
+<td>/</td>
+
+<td><select name="till_year" method="post">
+<option></option>
+<?php 
+//xronos
+//$current = getdate();
+//$cyear = $current['year'];
+$year_part_till=intval($date_part_till['0']);
+
+if ($row1['work_till']=='0000-00-00' or $year_part_till=='0000') 
+{
+//for ($i=1990;$i<($cyear+1);$i++)
+for ($i=$cyear;$i>1989;$i--)
+{ 
+echo "<option>$i</option>"; 
+}
+}//end first if
+
+else if ($row1['work_till'] != '0000-00-00' and $year_part_till!='0000')
+{
+//for ($i=1990;$i<$year_part_till;$i++)
+for ($i=$cyear;$i>$year_part_till;$i--)
+{
+echo "<option>".$i."</option>";
+}
+echo "<option selected>".$year_part_till."</option>";
+//for ($i=($year_part_till+1);$i<($cyear+1);$i++)
+for ($i=($year_part_till-1);$i>1989;$i--)
+{
+echo "<option>".$i."</option>";
+}
+}//end 2nd if
+?>
+</select></td>
+</table></td></tr>
+
+<tr><td bgcolor=#D3E2EA colspan="2"><b><label for="use_">Χρήση</label></b></td>
+<td colspan="2"><select name="use_select" method="post">
+<option></option>
+<option <?php if ($row1['use_eq']=='Προσωπικό') { echo "selected"; } ?>>Προσωπικό</option>
+<option <?php if ($row1['use_eq']=='Χρήστες') { echo "selected"; } ?>>Χρήστες</option>
+<option <?php if ($row1['use_eq']=='Απόσυρση') { echo "selected"; } ?>>Απόσυρση</option>
+</select></td></tr>
+
+<tr><td bgcolor=#D3E2EA rowspan="4" width="30%"><b><label for="thesis">Θέση <br />Εργασίας</label></b></td>
+<td bgcolor=#D3E2EA><b><label for="name">Όνομα Μηχανήματος</label></b></td>
+<td colspan="2"><input type="text" name="name_txt" value='<?php echo $row1['name']; ?>'/> </td></tr>
+
+<tr><td bgcolor=#D3E2EA><b><label for="ip">I.P.</label></b></td>
+<td colspan="2"><input type="text" name="ip_txt" value='<?php echo $row1['ip']; ?>'/> </td></tr>
+
+
+<tr><td bgcolor=#D3E2EA><b><label for="floor">Όροφος</label></b></td>
+<td colspan="2"><select name="floor_select" method="post">
+<option></option>
+<option <?php if ($row1['floor_eq']=='Ισόγειο') { echo "selected"; } ?>>Ισόγειο</option>
+<option <?php if ($row1['floor_eq']=='Πρώτος') { echo "selected"; } ?>>Πρώτος</option>
+<option <?php if ($row1['floor_eq']=='Δεύτερος') { echo "selected"; } ?>>Δεύτερος</option>
+<option <?php if ($row1['floor_eq']=='Τρίτος') { echo "selected"; } ?>>Τρίτος</option>
+</select></td></tr>
+
+
+<tr><td bgcolor=#D3E2EA><b><label for="department">Τμήμα</label></b></td>
+<td colspan="2"><select name="department_select" method="post">
+<option></option>
+<?php
+//emfanisi tou tmimatos pou antistoixei stin epilogi pou kaname, simfwna me ti Basi Dedomenwn
+
+$dbname = 'library';
+mysql_select_db($dbname);
+
+$query2="select id,title_el from library.lis_staff_sections order by title_el";
+$return2=mysql_query($query2);
+
+$count2=mysql_num_rows($return2);
+
+while ($count2>0) {
+$count2--;
+$row2=mysql_fetch_assoc($return2);
+if ($row2["id"]!=$row1["staff_section_id"])
+	{
+	echo "<option>".$row2["title_el"]."</option>";
+	}
+if ($row2["id"] == $row1["staff_section_id"])
+	{
+	echo "<option selected>".$row2["title_el"]."</option>";
+	}
+}
+
+ //mysql_free_result($return2);
+ //mysql_close($dbname);
+
+?>
+</select></td></tr>
+
+<tr><td bgcolor=#D3E2EA colspan="2"><b><label for="net">Δίκτυο</label></b></td>
+<td colspan="2"><input type="text" name="net_txt" value='<?php echo $row1['net']; ?>'/></td></tr>
+
+<tr><td bgcolor=#D3E2EA colspan="2"><b><label for="subnet">Υποδίκτυο</label></b></td>
+<td colspan="2"><input type="text" name="subnet_txt" value='<?php echo $row1['subnet']; ?>'/></td></tr>
+
+<tr><td bgcolor=#D3E2EA colspan="2"><b><label for="user">Χειριστής</label></b></td>
+<td colspan="2"><select name="user_select" method="post">
+<option></option>
+<?php 
+//emfanisi tou ipallilou pou antistoixei stin epilogi pou kaname, simfwna me ti Basi Dedomenwn
+
+$dbname = 'library';
+mysql_select_db($dbname);
+
+$query3="select id,fname,lname from library.lis_staff order by lname";
+$return3=mysql_query($query3);
+
+$count3=mysql_num_rows($return3);
+
+while ($count3>0) {
+$count3--;
+$row3=mysql_fetch_assoc($return3);
+if ($row3["id"]!=$row1["staff_id"] and $row3["lname"]!='-' and $row3["fname"]!='-')
+	{
+	echo "<option>".$row3["lname"]." ".$row3["fname"]."</option>";
+	}
+if ($row3["id"] == $row1["staff_id"])
+	{
+	echo "<option selected>".$row3["lname"]." ".$row3["fname"]."</option>";
+	}
+}
+
+// mysql_free_result($return4);
+// mysql_close($dbname);
+
+?>
+</select></td></tr>
+
+
+</table>
+
+<input type="hidden" name="edit_code_id" value='<?php echo $_POST['hide_id_checked_2'] ?>' />
+<input type="hidden" name="edit_operation_id" value='<?php echo $row1["operation_id"] ?>' /><?php // euresi tou operation_id ?> 
+<input type="hidden" name="edit_count" value='<?php echo $gg; ?>' />
+<input type="submit" value="Ενημέρωση" name="operation_create_edit"  />
+<input type="reset" value="Επαναφορά"  />
+<br/>
+</form>
+<form style="display:inline" name="6-2-3_edit_stoixeia_3" action="modules.php?name=card_PC_units&amp;op=card_show" method="post" enctype="multipart/form-data">
+<input type="submit" value="Προβολή Λίστας Μηχανημάτων" name="operation_show_3"  />
+</form>
+<hr />
+<?php 
+
+} //end of !array_key_exists(operation_create_edit)
+
+
+} //end while mysql_fetch_assoc
+
+$test_flag+=1;
+
+} //end if $count1!=0
+
+
+if ($count1==0 && !(array_key_exists('operation_create_edit', $_POST)) && !(array_key_exists('operation_create_2', $_POST)) && $test_flag==0)
+{
+echo "Το μηχάνημα <b>".$_POST['hide_id_checked_2']."</b> δεν έχει καταχωρημένα Στοιχεία Λειτουργίας. <br/><br/>";
+//echo "Το μηχάνημα <b>".$_POST['edit_code_id']."</b> δεν έχει καταχωρημένα Στοιχεία Λειτουργίας. <br/>"; //douleyei
+echo "Μπορείτε να δημιουργήσετε Στοιχεία Λειτουργίας για το συγκεκριμένο μηχάνημα ή να επιστρέψετε στη λίστα με όλα τα μηχανήματα για να επιλέξετε κάποιο άλλο, επιλέγοντας την κατάλληλη επιλογή.<br/><br/>";
+?>
+<form style="display:inline" name="6-2-3_edit_stoixeio" action="modules.php?name=card_PC_units&amp;op=create_stoixeia" method="post" enctype="multipart/form-data">
+<!--<input type="hidden" name="code_id_2" value='<?php //echo $_POST['edit_code_id'] ?>' />-->
+<input type="hidden" name="code_id_2" value='<?php echo $_POST['hide_id_checked_2'] ?>' />
+<input type="submit" value="Δημιουργία Στοιχείων Λειτουργίας" name="operation_create_2"  />
+</form>
+
+<br/><br/>
+
+<form style="display:inline" name="6-2-3_edit_stoixeia_2" action="modules.php?name=card_PC_units&amp;op=card_show" method="post" enctype="multipart/form-data">
+<input type="submit" value="Προβολή Λίστας Μηχανημάτων" name="operation_show"  />
+</form>
+<?php
+}
+
+?>
+
+<?php
+
+if (array_key_exists('operation_create_edit', $_POST)){ 
+
+//DIADIKASIA ENHMERWSHS THS BASHS
+
+//elegxos gia imerominia work_from
+if ($_POST['from_day']!='') { $fday=$_POST['from_day']; } else if ($_POST['from_day']=='') { $fday='00'; }
+if ($_POST['from_month']!='') { $fmonth=$_POST['from_month']; } else if ($_POST['from_month']=='') { $fmonth='00'; }
+if ($_POST['from_year']!='') { $fyear=$_POST['from_year']; } else if ($_POST['from_year']=='') { $fyear='0000'; }
+$fdate=$fyear.'-'.$fmonth.'-'.$fday;
+
+//elegxos gia imerominia work_till
+if ($_POST['till_day']!='') { $tday=$_POST['till_day']; } else if ($_POST['till_day']=='') { $tday='00'; }
+if ($_POST['till_month']!='') { $tmonth=$_POST['till_month']; } else if ($_POST['till_month']=='') { $tmonth='00'; }
+if ($_POST['till_year']!='') { $tyear=$_POST['till_year']; } else if ($_POST['till_year']=='') { $tyear='0000'; }
+$tdate=$tyear.'-'.$tmonth.'-'.$tday;
+
+// or8os elegxos gia to id tou tmimatos
+if ($_POST['department_select']!='')
+{
+$query4="select id from library.lis_staff_sections where title_el='".$_POST['department_select']."' limit 1";
+//echo $query4."<br/>";
+$return4=mysql_query($query4);
+$row4=mysql_fetch_assoc($return4);
+$dep_id=$row4["id"];
+}
+else if ($_POST['department_select']=='')
+{
+$dep_id=-1;
+}
+
+// or8os elegxos gia to id tou proswpikou
+if ($_POST['user_select']!='')
+{
+$usr=$_POST['user_select'];
+$usr_part=explode(" ", $usr);
+$usr_lname=$usr_part['0'];
+$usr_fname=$usr_part['1'];
+
+$query5="select id,lname,fname from library.lis_staff where lname='".$usr_lname."' and fname='".$usr_fname."' limit 1";
+//echo $query5."<br/>";
+$return5=mysql_query($query5);
+$row5=mysql_fetch_assoc($return5);
+$usr_id=$row5["id"];
+}
+else if ($_POST['user_select']=='')
+{
+$usr_id=-1;
+}
+
+
+// teliko insertion sti basi
+$query6="update equipment.operation_eq set grp='a1', work_from='".$fdate."', work_till='".$tdate."', use_eq='".$_POST['use_select'].
+"', name='".$_POST['name_txt']."', floor_eq='".$_POST['floor_select'].
+"', net='".$_POST['net_txt']."', subnet='".$_POST['subnet_txt']."', ip='".$_POST['ip_txt'].
+"', staff_section_id='".$dep_id."', staff_id='".$usr_id.
+"' where eq_id='".$_POST['edit_code_id']."' and operation_id='".$_POST['edit_operation_id']."'";
+
+echo "Η ενημέρωση που πραγματοποιήσατε έγινε επιτυχώς!<br/><br/>Σε περίπτωση που επιθυμείτε να δείτε τη λίστα των μηχανημάτων πατήστε <a href='http://150.140.152.10/mylis/modules.php?name=card_PC_units&amp;op=card_show'>εδώ</a>.";
+
+$return6=mysql_query($query6);
+//$row6=mysql_fetch_assoc($return6);
+
+	//$return6=mysql_query($query6);
+	//$row6=mysql_fetch_assoc($return6);
+
+}
+
+} //END OF FUNCTION 6
+?>
+
+
+
+<?php
+
+/////////////////////////////////////
+//					// dimiourgia stoixeiwn blabis / sintirisis / anava8misis
+//		FUNCTION 7 		//
+//					//
+/////////////////////////////////////
+
+function create_malfunction($db2,$db_select,$module_name,$sectname,$usersection,$managesection)
+{
+
+$dbname = 'library';
+mysql_select_db($dbname);
+
+function daymonth($number)
+{
+for ($i=1;$i<$number;$i++) { echo "<option> $i </option>"; }
+}
+
+
+if (!array_key_exists('malfunction_create', $_POST)) {
+
+
+?>
+
+<br />
+
+<form style="display:inline" name="6-2-3_malfunc" action="modules.php?name=card_PC_units&amp;op=create_malfunction" method="post" enctype="multipart/form-data">
+
+<table cols="4" border="2" cellspacing="1" cellpadding="2">
+
+<tr><td bgcolor=#D3E2EA align="center" colspan="4"><b>Στοιχεία Βλάβης / Συντήρησης / Αναβάθμισης Μηχανήματος
+<?php if (array_key_exists('hide_id_checked_3', $_POST)) {
+	echo '"'.$_POST['hide_id_checked_3'].'"'; }
+else if (array_key_exists('malfunction_create_bypass', $_POST)) {
+	echo '"'.$_POST['id_malfunction_bypass'].'"'; } 
+?>
+</b></td></tr>
+
+<tr><td bgcolor=#D3E2EA><b><label for="date_malfunc">Ημερομηνία Αναφοράς ή Εμφάνισης Βλάβης</label></b></td>
+
+<td>
+<table cols="4" border="0">
+<td><select name="malfunc_day" method="post">
+<option></option>
+<?php 
+$current = getdate();
+$day = $current['mday'];
+daymonth($day);
+?>
+<option selected><?php echo $day; ?></option>
+<?php
+for ($i=$day+1;$i<32;$i++)
+{
+echo "<option>$i</option>";
+}
+?>
+</select></td>
+
+<td>/</td>
+
+<td><select name="malfunc_month" method="post">
+<option></option>
+<?php 
+$current = getdate();
+$month = $current['mon'];
+daymonth($month);
+?>
+<option selected><?php echo $month; ?></option>
+<?php
+for ($i=$month+1;$i<13;$i++)
+{
+echo "<option>$i</option>";
+}
+?>
+</select></td>
+
+<td>/</td>
+
+<td><select name="malfunc_year" method="post">
+<option></option>
+<?php 
+$current = getdate(); $year = $current['year'];
+echo "<option selected> $year </option>";
+for ($i=($year-1);$i>1999;$i--) { echo "<option> $i </option>"; }
+?>
+</select></td>
+</table>
+</td>
+
+<td bgcolor=#D3E2EA><b><label for="type_action">Τύπος Εργασιών</label></b></td>
+<td><select name="type_action_select" method="post">
+<option></option>
+<option>Α: Αναβάθμιση</option>
+<option>Β: Βλάβη</option>
+<option>Π: Προγραμματισμένη Συντήρηση</option>
+</select></td></tr>
+
+<tr><td bgcolor=#D3E2EA><b><label for="descr_malfunc">Περιγραφή Προβλήματος</label></b></td>
+<td colspan="3"><textarea name="descr_malfunc_txt" rows="4" cols="80" wrap="soft"></textarea></td></tr>
+
+<tr><td bgcolor=#D3E2EA><b><label for="descr_restore">Περιγραφή Εργασιών Αποκατάστασης</label></b></td>
+<td colspan="3"><textarea name="descr_restore_txt" rows="4" cols="80" wrap="soft"></textarea></td></tr>
+
+<tr><td bgcolor=#D3E2EA><b><label for="implement">Υλοποίηση</label></b></td>
+<td><select name="implement_select" method="post">
+<option></option>
+<option>ΒΚΠ: Προσωπικό της ΒΚΠ</option>
+<option>ΕΞ: Εξωτερικός Συνεργάτης (+ Επωνυμία)</option>
+</select></td>
+<td bgcolor=#D3E2EA><b><label for="ex"># Σε περίπτωση ΕΞ</label></b></td>
+<td><select name="ex_select" method="post">
+<option></option>
+<?php
+
+$dbname = 'supplies';
+mysql_select_db($dbname);
+
+$query3="select supplier_name from supplies.supplier order by supplier_name";
+$return3=mysql_query($query3);
+
+$count3=mysql_num_rows($return3);
+
+while ($count3>0) {
+$count3--;
+$row3=mysql_fetch_assoc($return3);
+echo "<option>".$row3["supplier_name"]."</option>";
+}
+
+// mysql_free_result($return3);
+ //mysql_close($dbname);
+
+?>
+</select></td></tr>
+
+<tr><td bgcolor=#D3E2EA><b><label for="date_remove">Ημερομηνία Απομάκρυνσης Εξοπλισμού</label></b></td>
+<td><table cols="4" border="0">
+<td><select name="remove_day" method="post">
+<option></option>
+<?php daymonth(32); ?></select></td>
+<td>/</td>
+<td><select name="remove_month" method="post">
+<option></option>
+<?php daymonth(13); ?></select></td>
+<td>/</td>
+<td><select name="remove_year" method="post">
+<option></option>
+<?php 
+$current = getdate(); $year = $current['year'];
+for ($i=$year;$i>1989;$i--) { echo "<option> $i </option>"; } ?></select></td>
+</table></td>
+
+<td bgcolor=#D3E2EA><b><label for="date_implement">Ημερομηνία Περάτωσης Εργασιών / Επιστροφής Εξοπλισμού</label></b></td>
+<td><table cols="4" border="0">
+<td><select name="implement_day" method="post">
+<option></option>
+<?php daymonth(32); ?></select></td>
+<td>/</td>
+<td><select name="implement_month" method="post">
+<option></option>
+<?php daymonth(13); ?></select></td>
+<td>/</td>
+<td><select name="implement_year" method="post">
+<option></option>
+<?php 
+$current = getdate(); $year = $current['year'];
+for ($i=$year;$i>1989;$i--) { echo "<option> $i </option>"; } ?></select></td>
+</table></td></tr>
+
+<tr><td bgcolor=#D3E2EA><b><label for="cost">Συνολικό Κόστος Εργασιών & Υλικών (€ - EURO)</label></b></td>
+<td colspan="3"><input type="text" name="cost_txt" /></td></tr>
+
+<tr><td bgcolor=#D3E2EA><b><label for="sign_tech">Υπογραφή Υπευθύνου Τμήματος Μηχανοργάνωσης</label></b></td>
+<td><select name="sign_tech_txt" method="post">
+<option></option>
+<?php
+$query_sign_tech="select fname,lname from library.lis_staff where staff_section_id='3'";
+$return_sign_tech=mysql_query($query_sign_tech);
+$count_sign_tech=mysql_num_rows($return_sign_tech);
+
+while ($count_sign_tech>0) {
+$count_sign_tech--;
+$row_sign_tech=mysql_fetch_assoc($return_sign_tech);
+echo "<option>".$row_sign_tech['lname']." ".$row_sign_tech['fname']."</option>";
+}
+?>
+</select></td>
+
+
+<td bgcolor=#D3E2EA><b><label for="manager_sign">Υπογραφή Διευθυντή ΒΚΠ</label></b></td>
+<td><input type="text" name="sign_manager_txt" readonly="readonly" /></td></tr>
+
+</table>
+<br />
+<input type="hidden" name="malfunction_machine_id" value='<?php echo $_POST['hide_id_checked_3'] ?>' />
+<input type="hidden" name="malfunction_id_bypass" value='<?php echo $_POST['id_malfunction_bypass'] ?>' />
+<input type="submit" value="Δημιουργία" name="malfunction_create"  />
+<input type="reset" value="Εκκαθάριση"  />
+</form>
+
+<?php
+
+} // END if (!array_key_exists('malfunction_create', $_POST))
+
+
+if (array_key_exists('malfunction_create', $_POST)) {
+
+//AKOLOY8OYN OI ANA8ESEIS TWN ENDIAMESWN METABLHTWN PROKEIMENOY NA DIAXEIRISTOYME TO INSERTION STH BASH
+
+//Stoixeia Blabis/Sintirisis/Anava8misis
+
+if ($_POST['malfunc_day'] !='') { $tmp1_1=$_POST['malfunc_day']; } else { $tmp1_1=00; }
+if ($_POST['malfunc_month'] !='') { $tmp1_2=$_POST['malfunc_month']; } else { $tmp1_2=00; }
+if ($_POST['malfunc_year'] !='') { $tmp1_3=$_POST['malfunc_year']; } else { $tmp1_3=0000; }
+$tmp1_malfunc=$tmp1_3."-".$tmp1_2."-".$tmp1_1;
+
+if ($_POST['remove_day'] !='') { $tmp2_1=$_POST['remove_day']; } else { $tmp2_1=00; }
+if ($_POST['remove_month'] !='') { $tmp2_2=$_POST['remove_month']; } else { $tmp2_2=00; }
+if ($_POST['remove_year'] !='') { $tmp2_3=$_POST['remove_year']; } else { $tmp2_3=0000; }
+$tmp2_remove=$tmp2_3."-".$tmp2_2."-".$tmp2_1;
+
+if ($_POST['implement_day'] !='') { $tmp3_1=$_POST['implement_day']; } else { $tmp3_1=00; }
+if ($_POST['implement_month'] !='') { $tmp3_2=$_POST['implement_month']; } else { $tmp3_2=00; }
+if ($_POST['implement_year'] !='') { $tmp3_3=$_POST['implement_year']; } else { $tmp3_3=0000; }
+$tmp3_implement=$tmp3_3."-".$tmp3_2."-".$tmp3_1;
+
+if ($_POST['type_action_select']!='') { $ergasia=$_POST['type_action_select']; } else { $ergasia='-'; }
+
+if ($_POST['descr_malfunc_txt']!='') { $perigrafi_blabis=$_POST['descr_malfunc_txt']; } else { $perigrafi_blabis='-'; }
+
+if ($_POST['descr_restore_txt']!='') { $perigrafi_apokatastasis=$_POST['descr_restore_txt']; } else { $perigrafi_apokatastasis='-'; }
+
+if ($_POST['implement_select']!='') { $dinamiko=$_POST['implement_select']; } else { $dinamiko='-'; }
+
+// euresi tou antistoixou id gia to onoma tou promi8euti pou epilexame
+if ($_POST['ex_select']!='') { 
+$query_sup="select supplier_id from supplies.supplier where supplier_name='".$_POST['ex_select']."' limit 1";
+$return_sup=mysql_query($query_sup);
+$row_sup=mysql_fetch_assoc($return_sup);
+$sup_id=$row_sup['supplier_id'];
+} else { $sup_id=-1; }
+
+if ($_POST['cost_txt']!='') { $kostos=$_POST['cost_txt']; } else { $kostos=0; }
+
+//diaxeirisi toy onomatos TEXNIKOY pou epilegoume
+if ($_POST['sign_tech_txt']!='') { 
+$u=$_POST['sign_tech_txt'];
+$u_part=explode (" ", $u);
+$lname_part=$u_part['0'];
+$fname_part=$u_part['1'];
+$query_tech_2="select id from library.lis_staff where lname='".$lname_part."' and fname='".$fname_part."' limit 1";
+$return_tech_2=mysql_query($query_tech_2);
+$row_tech_2=mysql_fetch_assoc($return_tech_2);
+$tech_2_id=$row_tech_2['id'];
+} else { $tech_2_id=-1; }
+
+
+if ($_POST['sign_manager_txt']!='') { $manager=$_POST['sign_manager_txt']; } else { $manager='-'; }
+
+
+//euresi tou swstou id //KALH ME8ODOS GIA TO POIA FORMA KALEI POIA ALLH, POIA KOYMPIA PATIOYNTAI KAI GENIKOTERA NA GINETAI SWSTOS ELEGXOS 
+if ($_POST['malfunction_machine_id']!='') {
+$equipment_id=$_POST['malfunction_machine_id']; }
+else if ($_POST['malfunction_id_bypass']!='') {
+$equipment_id=$_POST['malfunction_id_bypass']; }
+
+//else if ($_POST['id_malfunction_bypass']!='') {
+//$equipment_id=$_POST['id_malfunction_bypass']; }
+
+
+//Eisagwgi twn stoixeiwn tis formas sti basi
+
+//elegxos gia to ean i basi einai keni apo kataxwriseis i oxi
+$query_zero_db="select * from equipment.malfunction_eq";
+$return_zero_db=mysql_query($query_zero_db);
+$count_zero_db=mysql_num_rows($return_zero_db);
+
+
+//PERIPTWSH 1
+//ean i basi einai keni, vazw to malfunction_id xeirwnaktika iso me ENA
+if ($count_zero_db==0) 
+{ 
+$row_zero_db=mysql_fetch_array($return_zero_db);
+$malf_id=1;
+$query_malf="insert into equipment.malfunction_eq (grp,malfunction_id,eq_id,date_submit,type_work,malfunc_descr,restore_descr,".
+"implement,supplier_id,date_remove,date_return,cost,sign_tech,sign_manager)".
+" values ".
+"('a1', '$malf_id', '$equipment_id', '$tmp1_malfunc', '$ergasia', '$perigrafi_blabis', '$perigrafi_apokatastasis',".
+"'$dinamiko', '$sup_id', '$tmp2_remove', '$tmp3_implement', '$kostos', '$tech_2_id', '$manager')";
+}
+
+
+//PERIPTWSH 2
+//Ean i vasi DEN einai keni, den asxoloume me to malfunction_id dioti exei dilw8ei ws auto-increment sti vasi
+if ($count_zero_db!=0)
+{
+$query_malf="insert into equipment.malfunction_eq (grp,eq_id,date_submit,type_work,malfunc_descr,restore_descr,".
+"implement,supplier_id,date_remove,date_return,cost,sign_tech,sign_manager)".
+" values ".
+"('a1', '$equipment_id', '$tmp1_malfunc', '$ergasia', '$perigrafi_blabis', '$perigrafi_apokatastasis', ".
+"'$dinamiko', '$sup_id', '$tmp2_remove', '$tmp3_implement', '$kostos', '$tech_2_id', '$manager')";
+}
+
+
+$return_malf=mysql_query($query_malf);
+//echo $query_malf;
+//$row_malf=mysql_fetch_assoc($return_malf);
+//echo "<hr />";
+echo "Τα στοιχεία Βλάβης για το Μηχάνημα καταχωρήθηκαν επιτυχώς! <br/>"; 
+//echo "<hr/>";
+?>
+<br />
+<form style="display:inline" name="6-2-3_show_list_malf" action="modules.php?name=card_PC_units&amp;op=card_show" method="post" enctype="multipart/form-data">
+<input type="submit" value="Προβολή μηχανημάτων" name="show_list_malf"  />
+</form>
+<?php
+} // end if if (array_key_exists('malfunction_create', $_POST))
+
+
+} //END OF FUNCTION 7
+?>
+
+
+
+
+
+
+<?php
+
+/////////////////////////////////////
+//					// provoli stoixeiwn blabis / sintirisis / anava8misis
+//		FUNCTION 8 		//
+//					//
+/////////////////////////////////////
+
+function edit_malfunction($db2,$db_select,$module_name,$sectname,$usersection,$managesection)
+{
+
+$dbname = 'equipment';
+mysql_select_db($dbname);
+
+//elegxos gia swsti apotipwsi twn apotelesmatwn
+$test_flag=0;
+
+
+
+
+//PERIPTWSH 1 : DHMIOYRGIA THS FORMAS GIA THN PROBOLH TWN MHXANHMATWN
+if (!array_key_exists('form_malf_show_check', $_POST) && !array_key_exists('edit_malfunction_show', $_POST) && !array_key_exists('malfunction_update', $_POST)) {
+
+
+// elegxos gia ti diasindesi mesw tis provolis tis blabis ---- KALO !!!!
+if (!$_POST["connect_malfunctions"]) { $id_handler=$_POST['hide_id_checked_4']; }
+else if ($_POST["connect_malfunctions"]) { $id_handler=$_POST['connect_malfunctions_id']; }
+
+$query1="select * from equipment.malfunction_eq where eq_id='".$id_handler."' and grp='a1' order by malfunction_id asc";
+$return1=mysql_query($query1);
+
+if (!$return1) {
+    die('Invalid query: ' . mysql_error());
+}
+
+if (mysql_num_rows($return1) == 0) {
+echo "Το μηχάνημα <b>".$id_handler."</b> δεν έχει καταχωρημένα Στοιχεία Βλάβης / Συντήρησης / Αναβάθμισης. <br/><br/>";
+echo "Μπορείτε να δημιουργήσετε Στοιχεία Βλάβης / Συντήρησης / Αναβάθμισης για το συγκεκριμένο μηχάνημα ή να επιστρέψετε στη λίστα με όλα τα μηχανήματα για να επιλέξετε κάποιο άλλο, επιλέγοντας την κατάλληλη επιλογή.<br/><br/>";
+?>
+<form style="display:inline" name="6-2-4_edit_blabi_4" action="modules.php?name=card_PC_units&amp;op=create_malfunction" method="post" enctype="multipart/form-data">
+<!--<input type="hidden" name="code_id_2" value='<?php //echo $_POST['edit_code_id'] ?>' />-->
+<input type="hidden" name="id_malfunction_bypass" value='<?php echo $id_handler; ?>' />
+<input type="submit" value="Δημιουργία Στοιχείων Βλάβης / Συντήρησης / Αναβάθμισης" name="malfunction_create_bypass"  />
+</form>
+<br/>
+<form style="display:inline" name="6-2-3_edit_stoixeia_2" action="modules.php?name=card_PC_units&amp;op=card_show" method="post" enctype="multipart/form-data">
+<input type="submit" value="Προβολή Λίστας Μηχανημάτων" name="operation_show"  />
+</form>
+<?php
+
+}
+
+else {
+
+$count1=mysql_num_rows($return1);
+
+echo "<form style='display:inline' name='6-2-4_update_blabi' action='modules.php?name=card_PC_units&amp;op=edit_malfunction' method='post' enctype='multipart/form-data'>";
+echo "<table cols='8' border='2' cellspacing='1' cellpadding='2'>";
+echo "<tr><td colspan='8' align='center' bgcolor='#D3E2EA'><b>Στοιχεία Βλάβης / Συντήρησης / Αναβάθμισης Μηχανήματος \"".$id_handler."\"</b></td></tr>";
+echo "<tr><td bgcolor='#D3E2EA' align='center'><b>ΑΑ:</b></td><td bgcolor='#D3E2EA' align='center'><b>Ημερομηνία Εμφάνισης</b></td>".
+"<td bgcolor='#D3E2EA' align='center'><b>Τύπος Εργασίας</b></td><td bgcolor='#D3E2EA' align='center'><b>Υλοποίηση</b></td>".
+"<td bgcolor='#D3E2EA' align='center'><b>Εξωτερικός Συνεργάτης (ΕΞ)</b></td><td bgcolor='#D3E2EA' align='center'><b>Ημερομηνία Απομάκρυνσης Συσκευής</b></td>".
+"<td bgcolor='#D3E2EA' align='center'><b>Ημερομηνία Περάτωσης Βλάβης</b></td><td bgcolor='#D3E2EA' align='center'><b>Επεξεργασία</b></td></tr>";
+
+$gg=0;
+while ($row1=mysql_fetch_assoc($return1))
+{
+$gg++;
+
+echo "<tr><td align='center'>$gg</td><td align='center'>".$row1['date_submit']."</td><td>".$row1['type_work']."</td><td>".$row1['implement']."</td>";
+
+//PERIPTWSH EXWTERIKOY SYNERGATH
+//emfanisi tou promi8euti pou antistoixei stin epilogi pou kaname, simfwna me ti Basi Dedomenwn
+//$dbname_2 = 'supplies';
+//mysql_select_db($dbname_2);
+
+$query_supplier="select supplier_id,supplier_name from supplies.supplier where supplier_id='".$row1["supplier_id"]."'";
+$return_supplier=mysql_query($query_supplier);
+$count_supplier=mysql_num_rows($return_supplier);
+
+$row_supplier=mysql_fetch_assoc($return_supplier);
+if ($row_supplier["supplier_id"] == $row1["supplier_id"])
+	{
+	echo "<td align='center'>".$row_supplier["supplier_name"]."</td>";
+	}
+
+else if ($row_supplier["supplier_id"] != $row1["supplier_id"] || $row_supplier["supplier_id"]=='') { echo "<td align='center'>-</td>"; }
+
+
+//HMEROMHNIA APOMAKRYNSHS SYSKEYHS
+echo "<td align='center'>".$row1['date_remove']."</td>";
+
+//HMEROMHNIA PERATWSHS BLABHS / EPISTROFHS SYSKEYHS
+echo "<td align='center'>".$row1['date_return']."</td>";
+
+//EPEXRGASIA
+echo "<td><input type='submit' name='edit_malfunction_show' value='Επεξεργασία' onclick='sub_choice_malf_show($gg)' /></td></tr>";
+
+} //end while ($row1=mysql_fetch_assoc($return1))
+if ($_POST["pass_report_id"]) { echo "<input type='hidden' name='pass_report_id_2' value='".$_POST["pass_report_id"]."' />"; }
+echo "<input type='hidden' name='number_choices' id='final_number_choices' value='$gg' />";
+echo "<input type='hidden' name='choice_number' id='choice_number_malf_show' value='1' />";
+echo "<input type='hidden' name='malf_eq_id' value='".$id_handler."' />";
+echo "<input type='hidden' name='form_malf_show_check' />";
+echo "</table></form>";
+
+} //end else
+
+
+$test_flag+=1;
+
+/*
+if ($count1==0 && !(array_key_exists('form_malf_show_check', $_POST)) && !(array_key_exists('malfunction_create_bypass', $_POST)) && $test_flag==0)
+{
+echo "Το μηχάνημα <b>".$id_handler."</b> δεν έχει καταχωρημένα Στοιχεία Βλάβης / Συντήρησης / Αναβάθμισης. <br/><br/>";
+//echo "Το μηχάνημα <b>".$_POST['edit_code_id']."</b> δεν έχει καταχωρημένα Στοιχεία Λειτουργίας. <br/>"; //douleyei
+echo "Μπορείτε να δημιουργήσετε Στοιχεία Βλάβης / Συντήρησης / Αναβάθμισης για το συγκεκριμένο μηχάνημα ή να επιστρέψετε στη λίστα με όλα τα μηχανήματα για να επιλέξετε κάποιο άλλο, επιλέγοντας την κατάλληλη επιλογή.<br/><br/>";
+?>
+<form style="display:inline" name="6-2-4_edit_blabi_4" action="modules.php?name=card_PC_units&amp;op=create_malfunction" method="post" enctype="multipart/form-data">
+<!--<input type="hidden" name="code_id_2" value='<?php //echo $_POST['edit_code_id'] ?>' />-->
+<input type="hidden" name="id_malfunction_bypass" value='<?php echo $id_handler; ?>' />
+<input type="submit" value="Δημιουργία Στοιχείων Βλάβης / Συντήρησης / Αναβάθμισης" name="malfunction_create_bypass"  />
+</form>
+<br/>
+<form style="display:inline" name="6-2-3_edit_stoixeia_2" action="modules.php?name=card_PC_units&amp;op=card_show" method="post" enctype="multipart/form-data">
+<input type="submit" value="Προβολή Λίστας Μηχανημάτων" name="operation_show"  />
+</form>
+<?php
+}
+*/
+
+
+
+} // end if (!array_key_exists('form_malf_show_check', $_POST) && !array_key_exists('edit_malfunction_show', $_POST) && !array_key_exists('malfunction_update', $_POST))
+// END PERIPTWSH 1
+
+
+
+
+
+
+
+
+//PERIPTWSH 2 : EMFANISH TWN STOIXEIWN TOY EPILEGMENOY MHXANHMATOS
+if (array_key_exists('edit_malfunction_show', $_POST) && !array_key_exists('malfunction_update', $_POST)) {
+$testt=$_POST['number_choices'];
+$tmp=$_POST['choice_number'];
+$query_2="select malfunction_id from equipment.malfunction_eq where eq_id='".$_POST['malf_eq_id']."' limit $tmp";
+$return_2=mysql_query($query_2);
+
+if (!$return_2) {
+die('Invalid query: ' . mysql_error());
+}
+
+if (mysql_num_rows($return_2) != 0){
+//elegxos gia tin antistoixia toy koumpiou pou pati8ike me to antistoixo id pou iparxei sti basi
+$grammi=0;
+while ($row_2=mysql_fetch_assoc($return_2)) {
+$grammi++;
+$finale[$grammi]=$row_2['malfunction_id'];
+}//telos to while
+
+$qid=$finale[$grammi];
+
+$query_3="select * from equipment.malfunction_eq where malfunction_id='".$finale[$grammi]."'";
+$return_3=mysql_query($query_3);
+
+if (!$return_3) {
+		die('Invalid query: ' . mysql_error());
+}
+
+if (mysql_num_rows($return_3) != 0)
+{
+$row_3=mysql_fetch_assoc($return_3);
+//######################################################
+//pinakas me ola ta stoixeia tis epilegmenis provolis pros epexergasia
+?>
+<form style="display:inline" name="6-2-4_update_blabi" action="modules.php?name=card_PC_units&amp;op=edit_malfunction" method="post" enctype="multipart/form-data">
+
+<table cols="4" border="2" cellspacing="1" cellpadding="2">
+
+
+<tr><td bgcolor=#D3E2EA align="center" colspan="4"><b>Στοιχεία Βλάβης / Συντήρησης / Αναβάθμισης Μηχανήματος
+<?php echo '"'.$_POST['malf_eq_id'].'"'; ?></b></td></tr>
+
+<tr><td bgcolor=#D3E2EA><b><label for="date_malfunc">Ημερομηνία Αναφοράς ή Εμφάνισης Βλάβης</label></b></td>
+
+<td>
+<table cols="4" border="0">
+<td><select name="malfunc_day" method="post">
+<option></option>
+<?php 
+//imera
+$date=$row_3['date_submit'];
+$date_part=explode ("-", $date);
+$day_part=intval($date_part['2']);
+
+for ($i=1;$i<$day_part;$i++)
+{
+echo "<option>".$i."</option>";
+}
+if ($day_part!=0)
+{
+echo "<option selected>".$day_part."</option>";
+}
+for ($i=$day_part+1;$i<32;$i++)
+{
+echo "<option>".$i."</option>";
+}
+?>
+</select></td>
+
+<td>/</td>
+
+<td><select name="malfunc_month" method="post">
+<option></option>
+<?php 
+//minas
+$month_part=intval($date_part['1']);
+
+for ($i=1;$i<$month_part;$i++)
+{
+echo "<option>$i</option>";
+}
+if ($month_part!=0)
+{
+echo "<option selected>".$month_part."</option>";
+}
+for ($i=$month_part+1;$i<13;$i++)
+{
+echo "<option>".$i."</option>";
+}
+?>
+</select></td>
+
+<td>/</td>
+
+<td><select name="malfunc_year" method="post">
+<option></option>
+<?php 
+//xronos
+$current = getdate();
+$cyear = $current['year'];
+$year_part=intval($date_part['0']);
+
+if ($row1['work_from']=='0000-00-00' or $year_part=='0000') 
+{
+//for ($i=1990;$i<($cyear+1);$i++)
+for ($i=$cyear;$i>1989;$i--)
+{ 
+echo "<option>$i</option>"; 
+}
+}//end first if
+
+else if ($row1['date_submit'] != '0000-00-00' and $year_part!='0000')
+{
+//for ($i=1990;$i<$year_part;$i++)
+for ($i=$cyear;$i>$year_part;$i--)
+{
+echo "<option>".$i."</option>";
+}
+echo "<option selected>".$year_part."</option>";
+//for ($i=($year_part+1);$i<($cyear+1);$i++)
+for ($i=($year_part-1);$i>1989;$i--)
+{
+echo "<option>".$i."</option>";
+}
+}//end 2nd if
+
+?>
+</select></td>
+</table>
+</td>
+
+<td bgcolor=#D3E2EA><b><label for="type_action">Τύπος Εργασιών</label></b></td>
+<td><select name="type_action_select" method="post">
+<option></option>
+<option <?php if ($row_3['type_work']=='Α: Αναβάθμιση') { echo "selected"; } ?>>Α: Αναβάθμιση</option>
+<option <?php if ($row_3['type_work']=='Β: Βλάβη') { echo "selected"; } ?>>Β: Βλάβη</option>
+<option <?php if ($row_3['type_work']=='Π: Προγραμματισμένη Συντήρηση') { echo "selected"; } ?>>Π: Προγραμματισμένη Συντήρηση</option>
+</select></td></tr>
+
+<tr><td bgcolor=#D3E2EA><b><label for="descr_malfunc">Περιγραφή Προβλήματος</label></b></td>
+<td colspan="3"><textarea name="descr_malfunc_txt" rows="10" cols="100" wrap="soft"><?php echo $row_3['malfunc_descr']; ?></textarea></td></tr>
+
+<tr><td bgcolor=#D3E2EA><b><label for="descr_restore">Περιγραφή Εργασιών Αποκατάστασης</label></b></td>
+<td colspan="3"><textarea name="descr_restore_txt" rows="10" cols="100" wrap="soft"><?php echo $row_3['restore_descr']; ?></textarea></td></tr>
+
+<tr><td bgcolor=#D3E2EA><b><label for="implement">Υλοποίηση</label></b></td>
+<td><select name="implement_select" method="post">
+<option></option>
+<option <?php if ($row_3['implement']=='ΒΚΠ: Προσωπικό της ΒΚΠ') { echo "selected"; } ?>>ΒΚΠ: Προσωπικό της ΒΚΠ</option>
+<option <?php if ($row_3['implement']=='ΕΞ: Εξωτερικός Συνεργάτης (+ Επωνυμία)') { echo "selected"; } ?>>ΕΞ: Εξωτερικός Συνεργάτης (+ Επωνυμία)</option>
+</select></td>
+<td bgcolor=#D3E2EA><b><label for="ex"># Σε περίπτωση ΕΞ</label></b></td>
+<td><select name="ex_select" method="post">
+<option></option>
+<?php
+//emfanisi tou promi8euti pou antistoixei stin epilogi pou kaname, simfwna me ti Basi Dedomenwn
+
+$dbname = 'supplies';
+mysql_select_db($dbname);
+
+$query2_edit="select supplier_id,supplier_name from supplies.supplier order by supplier_name";
+$return2_edit=mysql_query($query2_edit);
+
+$count2_edit=mysql_num_rows($return2_edit);
+
+while ($count2_edit>0) {
+$count2_edit--;
+$row2_edit=mysql_fetch_assoc($return2_edit);
+if ($row2_edit["supplier_id"]!=$row_3["supplier_id"])
+	{
+	echo "<option>".$row2_edit["supplier_name"]."</option>";
+	}
+if ($row2_edit["supplier_id"] == $row_3["supplier_id"])
+	{
+	echo "<option selected>".$row2_edit["supplier_name"]."</option>";
+	}
+}
+
+ //mysql_free_result($return2);
+ //mysql_close($dbname);
+
+?>
+</select></td></tr>
+
+<tr><td bgcolor=#D3E2EA><b><label for="date_remove">Ημερομηνία Απομάκρυνσης Εξοπλισμού</label></b></td>
+<td><table cols="4" border="0">
+<td><select name="remove_day" method="post">
+<option></option>
+<?php 
+//imera
+$date2=$row_3['date_remove'];
+$date_part2=explode ("-", $date2);
+$day_part2=intval($date_part2['2']);
+
+for ($i=1;$i<$day_part2;$i++)
+{
+echo "<option>".$i."</option>";
+}
+if ($day_part2!=0)
+{
+echo "<option selected>".$day_part2."</option>";
+}
+for ($i=$day_part2+1;$i<32;$i++)
+{
+echo "<option>".$i."</option>";
+}
+?>
+</select></td>
+
+<td>/</td>
+
+<td><select name="remove_month" method="post">
+<option></option>
+<?php 
+//minas
+$month_part2=intval($date_part2['1']);
+
+for ($i=1;$i<$month_part2;$i++)
+{
+echo "<option>$i</option>";
+}
+if ($month_part2!=0)
+{
+echo "<option selected>".$month_part2."</option>";
+}
+for ($i=$month_part2+1;$i<13;$i++)
+{
+echo "<option>".$i."</option>";
+}
+?>
+</select></td>
+
+<td>/</td>
+
+<td><select name="remove_year" method="post">
+<option></option>
+<?php 
+//xronos
+$current2 = getdate();
+$cyear2 = $current2['year'];
+$year_part2=intval($date_part2['0']);
+
+if ($row_3['date_remove']=='0000-00-00' or $year_part2=='0000') 
+{
+//for ($i=1990;$i<($cyear2+1);$i++)
+for ($i=$cyear2;$i>1989;$i--)
+{ 
+echo "<option>$i</option>"; 
+}
+}//end first if
+
+else if ($row_3['date_remove'] != '0000-00-00' and $year_part2!='0000')
+{
+//for ($i=1990;$i<$year_part2;$i++)
+for ($i=$cyear2;$i>$year_part2;$i--)
+{
+echo "<option>".$i."</option>";
+}
+echo "<option selected>".$year_part2."</option>";
+//for ($i=($year_part2+1);$i<($cyear2+1);$i++)
+for ($i=($year_part2-1);$i>1989;$i--)
+{
+echo "<option>".$i."</option>";
+}
+}//end 2nd if
+
+?>
+</select></td>
+</table></td>
+
+<td bgcolor=#D3E2EA><b><label for="date_implement">Ημερομηνία Περάτωσης Εργασιών / Επιστροφής Εξοπλισμού</label></b></td>
+<td><table cols="4" border="0">
+<td><select name="implement_day" method="post">
+<option></option>
+<?php 
+//imera
+$date3=$row_3['date_return'];
+$date_part3=explode ("-", $date3);
+$day_part3=intval($date_part3['2']);
+
+for ($i=1;$i<$day_part3;$i++)
+{
+echo "<option>".$i."</option>";
+}
+if ($day_part3!=0)
+{
+echo "<option selected>".$day_part3."</option>";
+}
+for ($i=$day_part3+1;$i<32;$i++)
+{
+echo "<option>".$i."</option>";
+}
+?>
+</select></td>
+
+<td>/</td>
+
+<td><select name="implement_month" method="post">
+<option></option>
+<?php 
+//minas
+$month_part3=intval($date_part3['1']);
+
+for ($i=1;$i<$month_part3;$i++)
+{
+echo "<option>$i</option>";
+}
+if ($month_part3!=0)
+{
+echo "<option selected>".$month_part3."</option>";
+}
+for ($i=$month_part3+1;$i<13;$i++)
+{
+echo "<option>".$i."</option>";
+}
+?>
+</select></td>
+
+<td>/</td>
+
+<td><select name="implement_year" method="post">
+<option></option>
+<?php 
+//xronos
+$current3 = getdate();
+$cyear3 = $current3['year'];
+$year_part3=intval($date_part3['0']);
+
+if ($row_3['date_return']=='0000-00-00' or $year_part3=='0000') 
+{
+//for ($i=1990;$i<($cyear3+1);$i++)
+for ($i=$cyear3;$i>1989;$i--)
+{ 
+echo "<option>$i</option>"; 
+}
+}//end first if
+
+else if ($row_3['date_return'] != '0000-00-00' and $year_part3!='0000')
+{
+//for ($i=1990;$i<$year_part3;$i++)
+for ($i=$cyear3;$i>$year_part3;$i--)
+{
+echo "<option>".$i."</option>";
+}
+echo "<option selected>".$year_part3."</option>";
+//for ($i=($year_part3+1);$i<($cyear3+1);$i++)
+for ($i=($year_part3-1);$i>1989;$i--)
+{
+echo "<option>".$i."</option>";
+}
+}//end 2nd if
+
+?>
+</select></td>
+</table></td></tr>
+
+<tr><td bgcolor=#D3E2EA><b><label for="cost">Συνολικό Κόστος Εργασιών & Υλικών (€ - EURO)</label></b></td>
+<td colspan="3"><input type="text" name="cost_txt" value='<?php echo $row_3['cost']; ?>'/></td></tr>
+
+<tr><td bgcolor=#D3E2EA><b><label for="sign_tech">Υπογραφή Υπευθύνου Τμήματος Μηχανοργάνωσης</label></b></td>
+<td><select name="sign_tech_txt" method="post">
+<option></option>
+<?php
+//emfanisi tou promi8euti pou antistoixei stin epilogi pou kaname, simfwna me ti Basi Dedomenwn
+
+$query2_sign_tech="select id,lname,fname from library.lis_staff where staff_section_id='3' order by lname";
+$return2_sign_tech=mysql_query($query2_sign_tech);
+
+$count2_sign_tech=mysql_num_rows($return2_sign_tech);
+
+while ($count2_sign_tech>0) {
+$count2_sign_tech--;
+$row2_sign_tech=mysql_fetch_assoc($return2_sign_tech);
+if ($row2_sign_tech["id"]!=$row_3["sign_tech"])
+	{
+	echo "<option>".$row2_sign_tech["lname"]." ".$row2_sign_tech["fname"]."</option>";
+	}
+if ($row2_sign_tech["id"]==$row_3["sign_tech"])
+	{
+	echo "<option selected>".$row2_sign_tech["lname"]." ".$row2_sign_tech["fname"]."</option>";
+	}
+}
+?>
+</select></td>
+
+
+
+<td bgcolor=#D3E2EA><b><label for="manager_sign">Υπογραφή Διευθυντή ΒΚΠ</label></b></td>
+<td><input type="text" name="sign_manager_txt" value='<?php echo $row_3['sign_manager']; ?>'/></td></tr>
+
+</table>
+<br />
+<?php
+if ($_POST["pass_report_id_2"]) { echo "<input type='hidden' name='pass_report_id_3' value='".$_POST["pass_report_id_2"]."' />"; }
+?>
+<input type="hidden" name="edit_code_id" value='<?php echo $_POST['malf_eq_id'] ?>' />
+<input type="hidden" name="edit_operation_id" value='<?php echo $row_3["malfunction_id"] ?>' /><?php // euresi tou malfunction_id ?> 
+<input type="hidden" name="edit_count" value="<?php echo $gg; ?>" />
+<input type="submit" value="Ενημέρωση" name="malfunction_update"  />
+<input type="reset" value="Επαναφορά"  />
+</form>
+<br/><br/>
+<form style="display:inline" name="6-2-4_edit_mal_4" action="modules.php?name=card_PC_units&amp;op=card_show" method="post" enctype="multipart/form-data">
+<input type="submit" value="Προβολή Λίστας Μηχανημάτων" name="operation_show_3"  />
+</form>
+
+
+<?php
+
+
+//######################################################
+} //end if (mysql_num_rows($return_3) != 0)
+} //end if (mysql_num_rows($return_2) != 0)
+
+
+} // end if (array_key_exists('edit_malfunction_show', $_POST) && !array_key_exists('malfunction_update', $_POST))
+// END PERIPTWSH 2
+
+
+
+
+if (array_key_exists('malfunction_update', $_POST)){ 
+//PERIPTWSH 3 : DIADIKASIA ENHMERWSHS THS BASHS
+
+//elegxos gia imerominia anaforas/emfanisis blabis
+if ($_POST['malfunc_day']!='') { $mal_day=$_POST['malfunc_day']; } else if ($_POST['malfunc_day']=='') { $mal_day='00'; }
+if ($_POST['malfunc_month']!='') { $mal_month=$_POST['malfunc_month']; } else if ($_POST['malfunc_month']=='') { $mal_month='00'; }
+if ($_POST['malfunc_year']!='') { $mal_year=$_POST['malfunc_year']; } else if ($_POST['malfunc_year']=='') { $mal_year='0000'; }
+$mal_date=$mal_year.'-'.$mal_month.'-'.$mal_day;
+
+// or8os elegxos gia to id tou promi8euti
+if ($_POST['ex_select']!='')
+{
+$query3="select supplier_id from supplies.supplier where supplier_name='".$_POST['ex_select']."' limit 1";
+$return3=mysql_query($query3);
+$row3=mysql_fetch_assoc($return3);
+$supplier_mal_id=$row3["supplier_id"];
+}
+else if ($_POST['ex_select']=='')
+{
+$supplier_mal_id=-1;
+}
+
+//elegxos gia imerominia apomakrinsis exoplismou
+if ($_POST['remove_day']!='') { $rem_day=$_POST['remove_day']; } else if ($_POST['remove_day']=='') { $rem_day='00'; }
+if ($_POST['remove_month']!='') { $rem_month=$_POST['remove_month']; } else if ($_POST['remove_month']=='') { $rem_month='00'; }
+if ($_POST['remove_year']!='') { $rem_year=$_POST['remove_year']; } else if ($_POST['remove_year']=='') { $rem_year='0000'; }
+$rem_date=$rem_year.'-'.$rem_month.'-'.$rem_day;
+
+//elegxos gia imerominia epistrofis exoplismou
+if ($_POST['implement_day']!='') { $impl_day=$_POST['implement_day']; } else if ($_POST['implement_day']=='') { $impl_day='00'; }
+if ($_POST['implement_month']!='') { $impl_month=$_POST['implement_month']; } else if ($_POST['implement_month']=='') { $impl_month='00'; }
+if ($_POST['implement_year']!='') { $impl_year=$_POST['implement_year']; } else if ($_POST['implement_year']=='') { $impl_year='0000'; }
+$impl_date=$impl_year.'-'.$impl_month.'-'.$impl_day;
+
+
+//diaxeirisi toy onomatos TEXNIKOY pou epilegoume
+if ($_POST['sign_tech_txt']!='') { 
+$u=$_POST['sign_tech_txt'];
+$u_part=explode (" ", $u);
+$lname_part=$u_part['0'];
+$fname_part=$u_part['1'];
+$query_tech_2="select id from library.lis_staff where lname='".$lname_part."' and fname='".$fname_part."' limit 1";
+$return_tech_2=mysql_query($query_tech_2);
+$row_tech_2=mysql_fetch_assoc($return_tech_2);
+$tech_2_id=$row_tech_2['id'];
+} else { $tech_2_id=-1; }
+//if ($_POST['sign_tech_txt']!='') { $texnikos=$_POST['sign_tech_txt']; } else { $texnikos='-1'; }
+
+//elegxos gia to ean iparxei imerominia apokatastasis tis vlavis
+//kai ean iparxei kapoio report_id perasmeno
+//kai ean prokeitai gia blabi
+//tropopoiisi tis sigekrimenis anaforas vlavis
+if ($_POST["pass_report_id_3"] && $impl_date!='0000-00-00' && $impl_date!='' && $_POST["type_action_select"]=='Β: Βλάβη') {
+$query_update_status_report="update equipment.report_malfunction_int set status='1' where report_id='".$_POST["pass_report_id_3"]."'";
+$ret_update_status_report=mysql_query($query_update_status_report);
+}
+
+// teliko insertion sti basi
+$query4="update equipment.malfunction_eq set grp='a1', date_submit='".$mal_date."', type_work='".$_POST['type_action_select'].
+"', malfunc_descr='".$_POST['descr_malfunc_txt']."', restore_descr='".$_POST['descr_restore_txt'].
+"', implement='".$_POST['implement_select']."', supplier_id='".$supplier_mal_id.
+"', date_remove='".$rem_date."', date_return='".$impl_date."', cost='".$_POST['cost_txt'].
+"', sign_tech='$tech_2_id', sign_manager='".$_POST['sign_manager_txt'].
+"' where eq_id='".$_POST['edit_code_id']."' and malfunction_id='".$_POST['edit_operation_id']."'";
+
+echo "Η ενημέρωση που πραγματοποιήσατε έγινε επιτυχώς!<br/><br/>Σε περίπτωση που επιθυμείτε να δείτε τη λίστα των μηχανημάτων πατήστε <a href='http://150.140.152.10/mylis/modules.php?name=card_PC_units&amp;op=card_show'>εδώ</a>.";
+
+$return4=mysql_query($query4);
+//$row4=mysql_fetch_assoc($return4);
+
+}// END PERIPTWSH 3
+
+
+
+} //END OF FUNCTION 8
+?>
+
+
+
+
+
+
+<?php
+
+
+switch($op)
+{
+case "card_create":
+ 	card_create($db2,$db_select,$module_name,$sectname,$usersection,$managesection,$user_id);
+	break;
+case "card_create_ok":
+ 	card_create_ok($db2,$db_select,$module_name,$sectname,$usersection,$managesection,$user_id);
+	break;
+case "card_show":
+ 	card_show($db2,$db_select,$module_name,$sectname,$usersection,$managesection,$user_id);
+	break;
+case "card_edit":
+ 	card_edit($db2,$db_select,$module_name,$sectname,$usersection,$managesection,$user_id);
+	break;
+case "create_stoixeia":
+ 	create_stoixeia($db2,$db_select,$module_name,$sectname,$usersection,$managesection,$user_id);
+	break;
+case "edit_stoixeia":
+ 	edit_stoixeia($db2,$db_select,$module_name,$sectname,$usersection,$managesection,$user_id);
+	break;
+case "create_malfunction":
+ 	create_malfunction($db2,$db_select,$module_name,$sectname,$usersection,$managesection,$user_id);
+	break;
+case "edit_malfunction":
+ 	edit_malfunction($db2,$db_select,$module_name,$sectname,$usersection,$managesection,$user_id);
+	break;
+}
+
+closetable();
+
+include("footer.php");
+include("includes/counter.php");
+
+?>
